@@ -1,31 +1,51 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Onest } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AccessGate } from "@/components/access-gate";
 import { AppShell } from "@/components/app-shell";
+import { ThemeProvider, themeScript } from "@/components/theme";
 import { StoreProvider } from "@/store/provider";
 
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const onest = Onest({ variable: "--font-onest", subsets: ["latin"], display: "swap" });
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Ringside", template: "%s · Ringside" },
-  description: "AI hiring assistant and people-search outreach powered by Hunar.AI voice agents.",
+  description:
+    "Voice-first hiring assistant. Screen candidates and reach out to sourced talent with Hunar.AI voice agents.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">
-        <StoreProvider>
-          <AppShell>
-            <AccessGate>{children}</AccessGate>
-          </AppShell>
-          <Toaster richColors position="top-right" closeButton />
-        </StoreProvider>
+    <html lang="en" suppressHydrationWarning className={`${onest.variable} ${geistMono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="antialiased">
+        <ThemeProvider>
+          <StoreProvider>
+            <AppShell>
+              <AccessGate>{children}</AccessGate>
+            </AppShell>
+            <Toaster
+              position="top-right"
+              closeButton
+              toastOptions={{
+                classNames: {
+                  toast:
+                    "!bg-popover !text-popover-foreground !border-border !rounded-lg backdrop-blur-xl",
+                },
+              }}
+            />
+          </StoreProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
