@@ -6,9 +6,11 @@
 
 /*
   RINGSIDE · HALO
-  The ambient light lives on the frame; the workspace is a clean inset sheet.
-  Glass appears only where surfaces overlap (the rail, popovers, the sticky header),
-  never behind the data, because blur behind small text is where glassmorphism dies.
+  The app fills the viewport. There is no window inside the window: the browser is the window.
+  The ambient teal lives in real surfaces (the rail, icon tiles, focus, selection), never as a
+  decorative frame around the page. Glass appears only where something genuinely overlaps
+  content (the mobile drawer, popovers, dialogs), never behind the data, because blur behind
+  small text is where glassmorphism dies.
 
   Aqua ambient  · teal light washing the window edge  (--halo-*)
   Ink actions   · near-black primary, so the frame carries brand and buttons carry intent
@@ -85,32 +87,16 @@
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "SFMono-Regular", monospace;
 
-  /* --- ambient frame --- */
+  /* --- ambient: a tint carried by real surfaces, never a frame --- */
   --halo-1: #c7eded;
-  --halo-2: #bde7eb;
-  --halo-3: #ddf0ff;
-  --halo-base-1: #eff9f9;
-  --halo-base-2: #f4f8f9;
-  --halo-base-3: #f3f7fb;
-  --halo-grain: 0.16;
-  --halo-ground:
-    radial-gradient(
-      120% 95% at 6% 0%,
-      var(--halo-1) 0%,
-      color-mix(in oklab, var(--halo-1) 45%, #fff) 24%,
-      transparent 62%
-    ),
-    radial-gradient(95% 85% at 100% 104%, var(--halo-2) 0%, transparent 58%),
-    radial-gradient(70% 60% at 88% 4%, var(--halo-3) 0%, transparent 60%),
-    linear-gradient(168deg, var(--halo-base-1) 0%, var(--halo-base-2) 55%, var(--halo-base-3) 100%);
+  --rail-wash: color-mix(in oklab, var(--tint) 7%, transparent);
 
   /* --- surfaces --- */
-  --background: var(--halo-base-2);
   --sheet: #ffffff;
-  --rail: rgb(248 251 252 / 0.82);
+  --background: var(--sheet);
+  --rail: #f7fafa;
+  --glass: rgb(255 255 255 / 0.82);
   --hairline: rgb(25 24 24 / 0.08);
-  --window-line: rgb(255 255 255 / 0.92);
-  --window-shadow: 0 1px 1px rgb(20 46 50 / 0.05), 0 18px 46px -26px rgb(14 60 66 / 0.5);
 
   /* --- ink --- */
   --foreground: #191818;
@@ -170,29 +156,13 @@
   color-scheme: dark;
 
   --halo-1: #0f4249;
-  --halo-2: #0d3a42;
-  --halo-3: #173350;
-  --halo-base-1: #0a1214;
-  --halo-base-2: #111314;
-  --halo-base-3: #121618;
-  --halo-grain: 0.38;
-  --halo-ground:
-    radial-gradient(
-      120% 95% at 6% 0%,
-      var(--halo-1) 0%,
-      color-mix(in oklab, var(--halo-1) 55%, #000) 26%,
-      transparent 64%
-    ),
-    radial-gradient(95% 85% at 100% 104%, var(--halo-2) 0%, transparent 58%),
-    radial-gradient(70% 60% at 88% 4%, var(--halo-3) 0%, transparent 60%),
-    linear-gradient(168deg, var(--halo-base-1) 0%, var(--halo-base-2) 55%, var(--halo-base-3) 100%);
+  --rail-wash: color-mix(in oklab, var(--tint) 11%, transparent);
 
-  --background: var(--halo-base-2);
-  --sheet: #1a1a1c;
-  --rail: rgb(24 27 28 / 0.8);
+  --sheet: #191a1c;
+  --background: var(--sheet);
+  --rail: #131517;
+  --glass: rgb(28 30 32 / 0.86);
   --hairline: rgb(255 255 255 / 0.08);
-  --window-line: rgb(255 255 255 / 0.09);
-  --window-shadow: 0 1px 1px rgb(0 0 0 / 0.4), 0 24px 56px -28px rgb(0 0 0 / 0.9);
 
   --foreground: #eceeef;
   --muted-foreground: #8d9295;
@@ -240,25 +210,12 @@
 
   html {
     @apply font-sans;
-    background: var(--halo-base-2);
+    background: var(--sheet);
   }
 
   body {
-    @apply text-foreground;
-    background: var(--halo-ground) fixed;
+    @apply bg-background text-foreground;
     min-height: 100svh;
-  }
-
-  /* film grain over the ambient field: kills gradient banding on wide displays */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    opacity: var(--halo-grain);
-    mix-blend-mode: overlay;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   /* browser surfaces belong to the design system too */
@@ -302,18 +259,16 @@
 }
 
 @layer components {
-  /* the window: everything the app draws lives inside this inset sheet */
-  .halo-window {
-    background: var(--sheet);
-    border: 1px solid var(--window-line);
-    box-shadow: var(--window-shadow);
+  /* the navigation rail: a solid surface with a soft ambient wash down its length */
+  .halo-rail {
+    background: linear-gradient(180deg, var(--rail-wash) 0%, transparent 42%), var(--rail);
   }
 
-  /* frosted surface, for the rail and anything that overlaps content */
+  /* frosted, only for surfaces that genuinely sit over content */
   .halo-glass {
-    background: var(--rail);
-    backdrop-filter: blur(20px) saturate(150%);
-    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    background: var(--glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
 
   /* the live lamp: the one piece of motion in the product, and it means something */

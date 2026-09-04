@@ -4,13 +4,15 @@ Ringside's visual system, recorded from the built product. Direction: **Halo**.
 
 ## The idea
 
-The ambient light lives on the **frame**; the workspace is a clean inset **sheet**.
+**The app fills the viewport. The browser is already the window, so the product never draws another one.**
 
-A warm-cool teal glow washes the window edges and fades toward the far corner. The application floats
-inside it as one rounded sheet with a hairline border. Glass appears only where surfaces genuinely
-overlap: the navigation rail, popovers, the mobile header. **Nothing is ever blurred behind the data**,
-because blur behind small text is where glassmorphism usually dies, and this product is a table of
-call results that a recruiter reads all day.
+The direction began from a screenshot of a desktop app sitting on a wallpaper. The wallpaper was the
+operating system, not the design; rebuilding it as a page background produced a window inside a window
+and wasted a band of screen on every side. The ambient teal survives, but it lives in real surfaces:
+a soft wash down the navigation rail, the icon tiles, focus rings, selection. Glass appears only where
+something genuinely sits over content, which on the web means the mobile drawer, popovers and dialogs.
+**Nothing is ever blurred behind the data**, because blur behind small text is where glassmorphism dies,
+and this product is a table of call results a recruiter reads all day.
 
 ## Color
 
@@ -18,12 +20,13 @@ Strategy: **restrained**. Neutrals plus one ambient hue, with a strict state voc
 
 | Role | Light | Dark | Notes |
 | --- | --- | --- | --- |
-| Ambient (frame) | `#C7EDED` → `#BDE7EB` → `#DDF0FF` | `#0F4249` → `#0D3A42` → `#173350` | three radial washes over a base gradient |
+| Ambient (rail wash) | `--tint` at 7% | `--tint` at 11% | a soft vertical wash down the rail, nowhere else |
 | Tint (brand accent) | `#0E7F8A` | `#35A3AD` | focus rings, icon tiles, empty-state marks |
-| Sheet (workspace) | `#FFFFFF` | `#1A1A1C` | never translucent |
-| Rail (glass) | `rgb(248 251 252 / .82)` | `rgb(24 27 28 / .8)` | `blur(20px) saturate(150%)` |
+| Sheet (workspace) | `#FFFFFF` | `#191A1C` | never translucent, fills the viewport |
+| Rail | `#F7FAFA` | `#131517` | solid, with the ambient wash on top |
+| Glass (overlays only) | `rgb(255 255 255 / .82)` | `rgb(28 30 32 / .86)` | `blur(20px) saturate(160%)` |
 | Ink (foreground) | `#191818` | `#ECEEEF` | |
-| Action (primary) | `#1D1B19` | `#F0F2F2` | near-black, so the frame carries brand and buttons carry intent |
+| Action (primary) | `#1D1B19` | `#F0F2F2` | near-black, so the tint carries brand and buttons carry intent |
 
 ### Call-state vocabulary
 
@@ -43,7 +46,7 @@ white barely moves (5.6:1 → 5.3:1) while the meaning becomes unmistakable. Do 
 toward emerald.
 
 Amber is reserved for a live call and nothing else. That is why the ambient is teal rather than the
-honey of the original reference: a honey frame and an amber lamp are the same family, and a ringing
+honey of the original reference: honey and an amber lamp are the same family, and a ringing
 call would lose its urgency against its own background.
 
 ## Type
@@ -56,11 +59,10 @@ more type elements here than on a brand surface and exaggerated contrast becomes
 
 ## Surfaces and depth
 
-- `.halo-window` — the inset sheet: 1px light border, a two-part shadow with real offset and blur.
-- `.halo-glass` — the frosted surface: `blur(20px) saturate(150%)`. The saturation is what makes it
-  read as glass rather than as a grey overlay.
-- Film grain at 16% (light) / 38% (dark) over the ambient field, killing gradient banding on wide displays.
-- Radius: 16px on the window, 10px inside it (`--radius`).
+- `.halo-rail` — the navigation rail: a solid surface with the ambient wash fading out over its top 42%.
+- `.halo-glass` — frosted, `blur(20px) saturate(160%)`, for the mobile drawer, popovers and dialogs only.
+  The saturation is what makes it read as glass rather than as a grey overlay.
+- Radius: 10px throughout (`--radius`). No page-level rounding; the app meets the viewport edge.
 
 ## Motion
 
@@ -88,9 +90,11 @@ Tables use tabular numerals so figures align down a column.
 
 ## Rules that are easy to break by accident
 
-1. Never put `backdrop-filter` behind a table, a form, or any block of small text.
-2. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
-3. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
+1. The app is edge to edge. No frame, no page background, no rounded outer shell. A desktop wallpaper
+   in a reference screenshot is the operating system, not the design.
+2. Never put `backdrop-filter` behind a table, a form, or any block of small text.
+3. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
+4. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
    their name; it is a credit, not co-branding.
-4. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
-5. State is a lamp plus a word. A colour on its own is not a state.
+5. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
+6. State is a lamp plus a word. A colour on its own is not a state.

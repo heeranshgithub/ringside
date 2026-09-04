@@ -165,38 +165,36 @@ function RailContents({ onNavigate }: { onNavigate?: () => void }) {
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="relative z-[1] sm:p-3">
-      <div className="halo-window flex min-h-[100svh] overflow-hidden sm:h-[calc(100svh-1.5rem)] sm:min-h-0 sm:rounded-2xl">
-        <aside className="halo-glass border-border hidden w-52 shrink-0 flex-col overflow-y-auto border-r p-2.5 lg:flex">
-          <RailContents />
-        </aside>
+    <div className="flex h-[100svh] overflow-hidden">
+      <aside className="halo-rail border-border hidden w-56 shrink-0 flex-col overflow-y-auto border-r p-3 lg:flex">
+        <RailContents />
+      </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="border-border halo-glass flex h-12 shrink-0 items-center gap-2 border-b px-3 lg:hidden">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Open navigation"
-              onClick={() => setOpen(true)}
-            >
-              <Menu />
-            </Button>
-            <Brand />
-          </header>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="border-border halo-glass sticky top-0 z-20 flex h-12 shrink-0 items-center gap-2 border-b px-3 lg:hidden">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Open navigation"
+            onClick={() => setOpen(true)}
+          >
+            <Menu />
+          </Button>
+          <Brand />
+        </header>
 
-          <Sheet open={open} onOpenChange={setOpen}>
-            <SheetContent side="left" className="halo-glass flex w-60 flex-col p-2.5">
-              <SheetTitle className="sr-only">Navigation</SheetTitle>
-              <div className="flex flex-1 flex-col pt-6">
-                <RailContents onNavigate={() => setOpen(false)} />
-              </div>
-            </SheetContent>
-          </Sheet>
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="left" className="halo-rail flex w-64 flex-col p-3">
+            <SheetTitle className="sr-only">Navigation</SheetTitle>
+            <div className="flex flex-1 flex-col pt-6">
+              <RailContents onNavigate={() => setOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
 
-          <main className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
-          </main>
-        </div>
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1400px] px-5 py-7 sm:px-8 lg:px-10">{children}</div>
+        </main>
       </div>
     </div>
   );
