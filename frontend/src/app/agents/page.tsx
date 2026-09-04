@@ -50,7 +50,7 @@ export default function AgentsPage() {
             <Button variant="outline" onClick={() => setImportOpen(true)}>
               <Download data-icon="inline-start" /> Import by ID
             </Button>
-            <Button render={<Link href="/agents/new" />}>
+            <Button nativeButton={false} render={<Link href="/agents/new" />}>
               <Plus data-icon="inline-start" /> New agent
             </Button>
           </>
@@ -64,7 +64,7 @@ export default function AgentsPage() {
           title="No agents yet"
           description="Agents are usually generated from a job. You can also write one from scratch."
           action={
-            <Button render={<Link href="/agents/new" />}>
+            <Button nativeButton={false} render={<Link href="/agents/new" />}>
               <Plus data-icon="inline-start" /> Create agent
             </Button>
           }

@@ -32,7 +32,7 @@ export default function SearchPage() {
         title="Find people, then let the agent call them"
         description="Pick a job (its description was already turned into search criteria), search a provider, add matches as candidates, then start calls. Answers show up on the job's Calls tab."
         actions={
-          <Button variant="outline" render={<Link href="/jobs/new" />}>
+          <Button variant="outline" nativeButton={false} render={<Link href="/jobs/new" />}>
             <Plus data-icon="inline-start" /> New job from a JD
           </Button>
         }
@@ -44,7 +44,7 @@ export default function SearchPage() {
           title="Create a job first"
           description="The search criteria come from a job description. Paste one and the assistant extracts titles, locations and skills."
           action={
-            <Button render={<Link href="/jobs/new" />}>
+            <Button nativeButton={false} render={<Link href="/jobs/new" />}>
               <Plus data-icon="inline-start" /> New job
             </Button>
           }
@@ -108,6 +108,7 @@ export default function SearchPage() {
           </CardHeader>
           <CardContent>
             <Button
+              nativeButton={false}
               render={<Link href={`/jobs/${job.id}?tab=${job.agentId ? "candidates" : "agent"}`} />}
             >
               Go to {job.agentId ? "candidates" : "agent setup"}{" "}

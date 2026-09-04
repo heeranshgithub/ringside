@@ -26,7 +26,7 @@ export default function JobsPage() {
         title="Jobs"
         description="Each job owns its candidates, its screening agent and its call results."
         actions={
-          <Button render={<Link href="/jobs/new" />}>
+          <Button nativeButton={false} render={<Link href="/jobs/new" />}>
             <Plus data-icon="inline-start" /> New job
           </Button>
         }
@@ -39,7 +39,7 @@ export default function JobsPage() {
           title="No jobs yet"
           description="Paste a job description and let the assistant draft screening questions and a voice agent."
           action={
-            <Button render={<Link href="/jobs/new" />}>
+            <Button nativeButton={false} render={<Link href="/jobs/new" />}>
               <Plus data-icon="inline-start" /> Create your first job
             </Button>
           }

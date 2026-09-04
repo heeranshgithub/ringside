@@ -69,7 +69,7 @@ export default function DashboardPage() {
               />
               Sync pending
             </Button>
-            <Button size="sm" render={<Link href="/jobs/new" />}>
+            <Button size="sm" nativeButton={false} render={<Link href="/jobs/new" />}>
               New job
               <ArrowRight data-icon="inline-end" />
             </Button>
@@ -101,38 +101,43 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Two ways to start</CardTitle>
-            <CardDescription>
-              Both end in the same place: a job with candidates, an agent and a results table.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 sm:grid-cols-2">
+        <div className="grid content-start gap-3 sm:grid-cols-2 lg:col-span-2">
+          {(
+            [
+              {
+                href: "/jobs/new",
+                icon: BriefcaseBusiness,
+                title: "AI hiring assistant",
+                body: "Paste a job description. We draft a screening agent, you add candidates, the agent calls and scores them.",
+              },
+              {
+                href: "/search",
+                icon: Search,
+                title: "People search & reach-out",
+                body: "Turn the job description into search criteria, pull profiles from Apollo, PDL or the demo dataset, and dial them.",
+              },
+            ] as const
+          ).map(({ href, icon: Icon, title, body }) => (
             <Link
-              href="/jobs/new"
-              className="hover:bg-muted/60 group rounded-xl border p-4 transition-colors"
+              key={href}
+              href={href}
+              className="border-border bg-card hover:border-tint/40 group flex flex-col rounded-xl border p-5 transition-colors"
             >
-              <BriefcaseBusiness className="text-primary mb-2 size-5" />
-              <div className="font-medium">AI hiring assistant</div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Paste a job description. We draft a screening agent, you add candidates, the agent
-                calls and scores them.
-              </p>
+              <span
+                className="text-tint mb-3 grid size-9 place-items-center rounded-lg"
+                style={{ background: "color-mix(in oklab, var(--tint) 12%, transparent)" }}
+              >
+                <Icon className="size-4.5" />
+              </span>
+              <span className="text-[15px] font-semibold tracking-[-0.01em]">{title}</span>
+              <p className="text-muted-foreground mt-1.5 text-[13px] leading-relaxed">{body}</p>
+              <span className="text-muted-foreground group-hover:text-tint mt-auto flex items-center gap-1.5 pt-5 text-[13px] font-medium transition-colors">
+                Start here
+                <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+              </span>
             </Link>
-            <Link
-              href="/search"
-              className="hover:bg-muted/60 group rounded-xl border p-4 transition-colors"
-            >
-              <Search className="text-primary mb-2 size-5" />
-              <div className="font-medium">People search &amp; reach-out</div>
-              <p className="text-muted-foreground mt-1 text-sm">
-                Turn the JD into search criteria, pull profiles from Apollo, PDL or the demo
-                dataset, and dial them.
-              </p>
-            </Link>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>Pipeline</CardTitle>
@@ -169,7 +174,7 @@ export default function DashboardPage() {
           <h2 className="flex items-center gap-2 text-base font-semibold">
             <PhoneCall className="size-4" /> Recent calls
           </h2>
-          <Button variant="ghost" size="sm" render={<Link href="/calls" />}>
+          <Button variant="ghost" size="sm" nativeButton={false} render={<Link href="/calls" />}>
             View all <ArrowRight data-icon="inline-end" />
           </Button>
         </div>
@@ -179,7 +184,7 @@ export default function DashboardPage() {
             title="No calls yet"
             description="Create a job, add a candidate and start a call. With safe-dial on, it rings your own test number."
             action={
-              <Button size="sm" render={<Link href="/jobs/new" />}>
+              <Button size="sm" nativeButton={false} render={<Link href="/jobs/new" />}>
                 Create a job
               </Button>
             }

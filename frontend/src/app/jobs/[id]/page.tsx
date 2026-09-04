@@ -300,7 +300,11 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" render={<Link href={`/agents/${agent.id}`} />}>
+            <Button
+              variant="outline"
+              nativeButton={false}
+              render={<Link href={`/agents/${agent.id}`} />}
+            >
               Edit prompts
             </Button>
             <Button variant="ghost" onClick={onDone}>

@@ -1,7 +1,7 @@
 "use client";
 
 import { PhoneCall, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { EmptyState, ErrorState, TableSkeleton } from "@/components/states";
 import { useGetCallsQuery, useSyncAllCallsMutation } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
 import { getErrorMessage } from "@/lib/errors";
+import { titleCase } from "@/lib/format";
 import type { CallStatus } from "@/types/call";
 
 const STATUSES: CallStatus[] = [
@@ -39,6 +40,16 @@ export default function CallsPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
   const { data: jobs } = useGetJobsQuery();
+
+  // Base UI renders the raw value in the trigger unless it is given the label map.
+  const statusItems = useMemo(
+    () => ({ all: "All statuses", ...Object.fromEntries(STATUSES.map((s) => [s, titleCase(s)])) }),
+    [],
+  );
+  const jobItems = useMemo(
+    () => ({ all: "All jobs", ...Object.fromEntries((jobs ?? []).map((j) => [j.id, j.title])) }),
+    [jobs],
+  );
   const { data, error, isLoading, refetch } = useGetCallsQuery(
     {
       status: status === "all" ? undefined : [status as CallStatus],
@@ -82,6 +93,7 @@ export default function CallsPage() {
       <div className="flex flex-wrap items-center gap-2">
         <Select
           value={status}
+          items={statusItems}
           onValueChange={(v) => {
             setStatus(v ?? "all");
             setPage(1);
@@ -94,13 +106,14 @@ export default function CallsPage() {
             <SelectItem value="all">All statuses</SelectItem>
             {STATUSES.map((s) => (
               <SelectItem key={s} value={s}>
-                {s.replace("_", " ")}
+                {titleCase(s)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         <Select
           value={jobId}
+          items={jobItems}
           onValueChange={(v) => {
             setJobId(v ?? "all");
             setPage(1);
