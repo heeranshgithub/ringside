@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Mongo
     mongodb_uri: str = "mongodb://localhost:27017"
-    mongodb_db: str = "hunar_hiring"
+    mongodb_db: str = "ringside"
 
     # Hunar Voice Agents
     hunar_api_key: str = ""
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
     llm_model: str = "anthropic/claude-sonnet-5"
     llm_audio_model: str = "google/gemini-2.5-flash"
-    llm_app_name: str = "Hunar Hiring Assistant"
+    llm_app_name: str = "Ringside"
 
     # People search providers
     apollo_api_key: str = ""

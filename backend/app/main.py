@@ -122,7 +122,7 @@ def create_app(
                 mongo_client.close()
 
     app = FastAPI(
-        title="Hunar Hiring Assistant API",
+        title="Ringside API",
         version="0.1.0",
         lifespan=lifespan,
         docs_url="/docs" if settings.env != "prod" else None,

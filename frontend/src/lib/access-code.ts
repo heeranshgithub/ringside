@@ -1,4 +1,4 @@
-const KEY = "hh.accessCode";
+const KEY = "ringside.accessCode";
 
 export function getAccessCode(): string | null {
   if (typeof window === "undefined") return null;

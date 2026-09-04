@@ -12,7 +12,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: { default: "Hunar Hiring Assistant", template: "%s · Hunar Hiring" },
+  title: { default: "Ringside", template: "%s · Ringside" },
   description: "AI hiring assistant and people-search outreach powered by Hunar.AI voice agents.",
 };
 

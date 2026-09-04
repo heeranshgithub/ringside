@@ -90,10 +90,10 @@ function Brand() {
   return (
     <Link href="/" className="flex items-center gap-2 px-1">
       <span className="bg-primary text-primary-foreground flex size-7 items-center justify-center rounded-lg text-xs font-bold">
-        HH
+        R
       </span>
       <div className="leading-tight">
-        <div className="text-sm font-semibold">Hunar Hiring</div>
+        <div className="text-sm font-semibold">Ringside</div>
         <div className="text-muted-foreground text-[11px]">Voice AI assistant</div>
       </div>
     </Link>

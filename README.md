@@ -1,6 +1,6 @@
-# Hunar Hiring Assistant
+# Ringside
 
-An AI hiring assistant and people-search outreach tool built on [Hunar.AI](https://hunar.ai) voice agents.
+Ringside is a voice-first hiring assistant and people-search outreach tool built on [Hunar.AI](https://hunar.ai) voice agents.
 Paste a job description, get a screening agent, add or discover candidates, let the agent call them, and read
 the structured answers, recording, transcript and fit score on a dashboard.
 

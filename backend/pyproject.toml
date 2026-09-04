@@ -1,7 +1,7 @@
 [project]
-name = "hunar-backend"
+name = "ringside-backend"
 version = "0.1.0"
-description = "AI Hiring Assistant + People Search & Reachout backend (FastAPI + Hunar Voice Agents)"
+description = "Ringside: voice-AI candidate screening and outreach on Hunar.AI voice agents"
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.115",
