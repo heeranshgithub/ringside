@@ -30,3 +30,6 @@ Thumbs.db
 *.log
 scratch/
 
+
+# impeccable review captures (regenerated, not source)
+.impeccable/review/
