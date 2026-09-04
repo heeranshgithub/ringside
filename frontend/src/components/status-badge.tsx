@@ -1,53 +1,63 @@
 import { cn } from "@/lib/utils";
 import { titleCase } from "@/lib/format";
 
-const STATUS_STYLES: Record<string, string> = {
-  NOT_STARTED: "bg-muted text-muted-foreground",
-  SCHEDULED: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  INITIATED: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  RINGING: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  IN_PROGRESS: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
-  COMPLETED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  NOT_CONNECTED: "bg-orange-500/15 text-orange-700 dark:text-orange-300",
-  CANCELLED: "bg-muted text-muted-foreground",
-  FAILED: "bg-destructive/10 text-destructive",
-  ENGAGED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  NOT_ENGAGED: "bg-muted text-muted-foreground",
-  active: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  draft: "bg-muted text-muted-foreground",
-  closed: "bg-muted text-muted-foreground",
-  strong_yes: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
-  yes: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  maybe: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
-  no: "bg-destructive/10 text-destructive",
-  insufficient_data: "bg-muted text-muted-foreground",
+/**
+ * One vocabulary for every asynchronous call state, used everywhere a status appears.
+ * A lamp carries the state; the word repeats it, so colour is never the only signal.
+ */
+type Lamp = "idle" | "live" | "talking" | "done" | "fail";
+
+const LAMP: Record<string, Lamp> = {
+  NOT_STARTED: "idle",
+  SCHEDULED: "idle",
+  INITIATED: "live",
+  RINGING: "live",
+  IN_PROGRESS: "talking",
+  COMPLETED: "done",
+  NOT_CONNECTED: "fail",
+  CANCELLED: "idle",
+  FAILED: "fail",
+  ENGAGED: "done",
+  NOT_ENGAGED: "idle",
+  active: "done",
+  draft: "idle",
+  closed: "idle",
+  strong_yes: "done",
+  yes: "done",
+  maybe: "live",
+  no: "fail",
+  insufficient_data: "idle",
 };
 
-const LIVE = new Set(["INITIATED", "RINGING", "IN_PROGRESS"]);
+const TONE: Record<Lamp, string> = {
+  idle: "text-muted-foreground",
+  live: "text-live-ink",
+  talking: "text-live-ink",
+  done: "text-done",
+  fail: "text-fail",
+};
 
 export function StatusBadge({
   status,
   className,
+  showLabel = true,
 }: {
   status: string | null | undefined;
   className?: string;
+  showLabel?: boolean;
 }) {
   if (!status) return <span className="text-muted-foreground">—</span>;
+  const lamp = LAMP[status] ?? "idle";
   return (
     <span
       className={cn(
-        "inline-flex h-5 items-center gap-1.5 rounded-full px-2 text-xs font-medium whitespace-nowrap",
-        STATUS_STYLES[status] ?? "bg-muted text-muted-foreground",
+        "inline-flex items-center gap-2 text-[13px] whitespace-nowrap",
+        TONE[lamp],
         className,
       )}
     >
-      {LIVE.has(status) && (
-        <span className="relative flex size-1.5">
-          <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-75" />
-          <span className="relative inline-flex size-1.5 rounded-full bg-current" />
-        </span>
-      )}
-      {titleCase(status)}
+      <span className="lamp" data-state={lamp} aria-hidden />
+      {showLabel && titleCase(status)}
     </span>
   );
 }
@@ -55,13 +65,17 @@ export function StatusBadge({
 export function ScorePill({ score }: { score: number }) {
   const tone =
     score >= 75
-      ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
+      ? "bg-done-bg text-done border-done-line"
       : score >= 50
-        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-        : "bg-muted text-muted-foreground";
+        ? "bg-live-bg text-live-ink border-live-line"
+        : "bg-muted text-muted-foreground border-transparent";
   return (
     <span
-      className={cn("inline-flex h-5 items-center rounded-full px-2 text-xs font-semibold", tone)}
+      className={cn(
+        "inline-block min-w-8 rounded-md border px-2 py-0.5 text-center text-[11.5px] font-semibold tabular-nums",
+        tone,
+      )}
+      title={`Fit score ${score} of 100`}
     >
       {score}
     </span>
