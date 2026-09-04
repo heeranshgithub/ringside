@@ -31,5 +31,5 @@ Thumbs.db
 scratch/
 
 
-# impeccable review captures (regenerated, not source)
-.impeccable/review/
+# impeccable working files (captures and decision-page logs, all regenerated)
+.impeccable/
