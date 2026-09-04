@@ -1,0 +1,22 @@
+# AWS Amplify Hosting build spec (Next.js SSR, App Router). Set the app's root directory to `frontend`.
+# Environment variable to set in the Amplify console: NEXT_PUBLIC_API_BASE_URL=https://<app-runner-url>
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - corepack enable
+        - corepack prepare pnpm@11.3.0 --activate
+        - pnpm install --frozen-lockfile
+    build:
+      commands:
+        - echo "NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL" >> .env.production
+        - pnpm build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*
