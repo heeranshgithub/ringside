@@ -54,7 +54,7 @@ import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import { maskPhone } from "@/lib/format";
 import type { AgentDraft } from "@/types/agent";
-import type { Candidate } from "@/types/candidate";
+import type { Candidate, CandidateSource } from "@/types/candidate";
 import type { Job } from "@/types/job";
 
 const TABS = ["overview", "agent", "candidates", "calls"] as const;
@@ -399,12 +399,13 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
   );
 }
 
-const SOURCE_LABEL: Record<string, string> = {
+const SOURCE_LABEL: Record<CandidateSource, string> = {
   manual: "Manual",
   csv: "CSV",
   mock: "Demo",
-  apollo: "Apollo",
   pdl: "PDL",
+  coresignal: "Coresignal",
+  apollo: "Apollo",
 };
 
 function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }) {

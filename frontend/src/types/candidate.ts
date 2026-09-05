@@ -1,4 +1,5 @@
-export type CandidateSource = "manual" | "csv" | "mock" | "apollo" | "pdl";
+/** Mirrors ProviderName in the backend, plus the two ways a person is added by hand. */
+export type CandidateSource = "manual" | "csv" | "mock" | "pdl" | "coresignal" | "apollo";
 
 export interface Candidate {
   id: string;
