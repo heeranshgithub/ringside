@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-ProviderName = Literal["mock", "apollo", "pdl"]
+ProviderName = Literal["mock", "pdl", "coresignal", "apollo"]
 
 
 class SearchCriteria(BaseModel):

@@ -48,9 +48,13 @@ class Settings(BaseSettings):
     llm_audio_model: str = "google/gemini-2.5-flash"
     llm_app_name: str = "Ringside"
 
-    # People search providers
-    apollo_api_key: str = ""
+    # People search providers. PDL is the primary: 100 free searches a month, plus a
+    # zero-credit sandbox with an identical schema for development.
     pdl_api_key: str = ""
+    pdl_sandbox: bool = True
+    coresignal_api_key: str = ""
+    coresignal_max_collect: int = 10
+    apollo_api_key: str = ""
 
     @computed_field  # type: ignore[prop-decorator]
     @property

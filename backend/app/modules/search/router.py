@@ -17,18 +17,25 @@ from app.modules.search.schemas import (
 
 router = APIRouter(prefix="/search", tags=["search"])
 
+# Shown under the provider picker, so keep these true rather than flattering.
+# Ringside never dials a sourced number: safe-dial routes every call to the test number,
+# so a provider is judged on whether its *search* is real and affordable, not on contacts.
 _LABELS = {
     "mock": (
         "Demo dataset",
-        "Seeded profiles, no phone numbers; calls use the safe-dial test number.",
-    ),
-    "apollo": (
-        "Apollo.io",
-        "Free search; contact details are masked unless enrichment credits are used.",
+        "30 seeded profiles, no account needed. Use this unless you are showing a real source.",
     ),
     "pdl": (
         "People Data Labs",
-        "Returns phone numbers where the dataset has them; costs credits per record.",
+        "100 free searches a month, 1 credit per profile. Sandbox mode costs nothing.",
+    ),
+    "coresignal": (
+        "Coresignal",
+        "Search is free; each profile shown costs 20 credits. The 7-day trial carries 2,000.",
+    ),
+    "apollo": (
+        "Apollo.io",
+        "Searching costs no credits, but API access is plan-gated and names arrive masked.",
     ),
 }
 

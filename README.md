@@ -8,7 +8,7 @@ the structured answers, recording, transcript and fit score on a dashboard.
 - **Backend:** Python 3.12, FastAPI, Pydantic v2, motor (MongoDB), httpx, structlog
 - **Voice:** Hunar Voice Agents external API (agents, calls, webhooks)
 - **LLM:** any OpenRouter model (default `anthropic/claude-sonnet-5`; audio transcription via a Gemini flash model)
-- **People search:** Apollo.io, People Data Labs, plus a seeded demo provider
+- **People search:** People Data Labs, Coresignal, Apollo.io, plus a seeded demo provider
 
 ## The three parts of the assignment
 
@@ -25,7 +25,7 @@ JD ──► LLM parse ──► Job (criteria, screening questions)
                        │
                        ├──► LLM drafts agent ──► POST /agents (Hunar) ──► mirrored in Mongo
                        │
-                       ├──► candidates: manual · CSV · Apollo/PDL/demo search
+                       ├──► candidates: manual · CSV · PDL/Coresignal/Apollo/demo search
                        │
                        └──► POST /calls (Hunar) per candidate  ──► webhooks + poller keep our mirror in sync
                                                                    └──► LLM assesses result → fit score
@@ -61,6 +61,11 @@ on exit. While the tunnel is open the backend is publicly reachable, so set `APP
 `/api` gated; `/webhooks/hunar` stays open by necessity and is protected by the signature check.
 - **camelCase on the wire, snake_case everywhere else.** One Pydantic base model does the conversion. Mongo documents
   are plain snake_case and never leave the service layer unconverted.
+- **Sourced numbers are never dialled.** Safe-dial means a candidate found through a people-search
+  provider is called on the test number, not on their own. So a provider is judged on whether its
+  *search* is real and affordable, never on whether it sells contact data, and the contact-data tier
+  of every provider is irrelevant here. Cold-calling strangers pulled from a B2B database to
+  demonstrate a product is not something this repo does.
 - **Degrades gracefully.** No OpenRouter key → rule-based JD parsing, template agents and heuristic scoring.
   No Hunar key → an in-memory fake that completes calls with sample results. No provider keys → the demo dataset.
 
@@ -72,7 +77,7 @@ Prerequisites: Node ≥ 20 with pnpm ≥ 10, Python ≥ 3.12 with [uv](https://d
 ```bash
 # backend
 cd backend
-cp .env.example .env            # fill HUNAR_API_KEY, TEST_PHONE_NUMBERS, optionally OPENROUTER_API_KEY / APOLLO_API_KEY / PDL_API_KEY
+cp .env.example .env            # fill HUNAR_API_KEY and TEST_PHONE_NUMBERS; the rest are optional
 uv sync
 uv run uvicorn app.main:app --reload --port 8000
 
@@ -108,7 +113,9 @@ See `backend/.env.example` for the full list. The ones that matter:
 | `PUBLIC_BASE_URL` | Public HTTPS URL of the backend. When set, calls are created with webhook callbacks. |
 | `MONGODB_URI`, `MONGODB_DB` | MongoDB connection. |
 | `OPENROUTER_API_KEY`, `LLM_MODEL`, `LLM_AUDIO_MODEL` | LLM for JD parsing, agent drafting, scoring and transcription. |
-| `APOLLO_API_KEY`, `PDL_API_KEY` | People-search providers. The demo provider is always available. |
+| `PDL_API_KEY`, `PDL_SANDBOX` | People Data Labs. Sandbox mode costs no credits and is the default. |
+| `CORESIGNAL_API_KEY`, `CORESIGNAL_MAX_COLLECT` | Coresignal. Each profile shown costs 20 credits, so the cap is a spend limit. |
+| `APOLLO_API_KEY` | Apollo.io. API access is gated to their paid plans. |
 | `APP_ACCESS_CODE` | Optional shared code; when set the UI asks for it and sends it as `X-Access-Code`. |
 | `CORS_ORIGINS` | Comma-separated allowed origins (Amplify preview domains are allowed by regex). |
 
@@ -121,6 +128,20 @@ The frontend needs only `NEXT_PUBLIC_API_BASE_URL`.
 - **Frontend → AWS Amplify Hosting** with the app root set to `frontend/`; `frontend/amplify.yml` is the build spec.
   Set `NEXT_PUBLIC_API_BASE_URL` to the App Runner URL and add the Amplify URL to the backend's `CORS_ORIGINS`.
 - **Database → MongoDB Atlas** (or any Mongo); set `MONGODB_URI`.
+
+## Choosing a people-search provider
+
+The assignment names four. One is gone and the rest differ more in billing than in data.
+
+| Provider | Free tier | What a search costs | Notes |
+|---|---|---|---|
+| **People Data Labs** *(default)* | 100 searches/month, self-serve | 1 credit per profile returned | A **sandbox** serves synthetic records with an identical schema at zero credits. Contact fields are boolean flags on the free tier, which does not matter here. |
+| **Coresignal** | 7-day trial, 2,000 credits | Search is free and returns ids; each profile collected costs 20 | 100 profiles in the trial, then $49/month. `CORESIGNAL_MAX_COLLECT` caps what one search can spend. |
+| **Apollo.io** | Search costs no credits | API access is gated to paid plans | Results are masked: last names render as `Do***e` and contacts arrive as booleans. Verify you can create a key before planning around it. |
+| **Proxycurl** | — | — | **Shut down 4 July 2025** after LinkedIn sued. The team now runs a company-data product; person search is gone. |
+
+PDL is the default because the sandbox makes development free and 100 real searches a month is
+more than a demo needs. Set `PDL_SANDBOX=false` only for the recorded run.
 
 ## API surface (backend)
 

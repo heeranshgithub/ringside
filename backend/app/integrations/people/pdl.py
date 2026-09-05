@@ -1,4 +1,12 @@
-"""People Data Labs Person Search (Elasticsearch DSL). Returns phones where the dataset has them."""
+"""People Data Labs Person Search (Elasticsearch DSL).
+
+Search bills one credit per profile returned, and the free tier carries 100 a month.
+The sandbox at sandbox.api.peopledatalabs.com serves synthetic records with an identical
+schema at zero credits, which is what development and the offline demo should run against.
+
+Free-tier caveat that bites: contact fields (mobile_phone, work_email, ...) come back as
+booleans rather than values, so they are coerced to None instead of the string "True".
+"""
 
 from __future__ import annotations
 
@@ -13,12 +21,17 @@ from app.integrations.people.base import PersonResult, SearchCriteria
 log = structlog.get_logger()
 
 
+PRODUCTION_URL = "https://api.peopledatalabs.com/v5"
+SANDBOX_URL = "https://sandbox.api.peopledatalabs.com/v5"
+
+
 class PdlProvider:
     name = "pdl"
 
-    def __init__(self, api_key: str, *, base_url: str = "https://api.peopledatalabs.com/v5"):
+    def __init__(self, api_key: str, *, sandbox: bool = False, base_url: str | None = None):
+        self.sandbox = sandbox
         self._http = httpx.AsyncClient(
-            base_url=base_url,
+            base_url=base_url or (SANDBOX_URL if sandbox else PRODUCTION_URL),
             headers={"X-Api-Key": api_key, "Accept": "application/json"},
             timeout=30,
         )
@@ -87,9 +100,21 @@ class PdlProvider:
         return [self._normalize(p) for p in resp.json().get("data", []) or []]
 
     @staticmethod
+    def _contact(*values: Any) -> str | None:
+        """On the free tier PDL returns contact fields as booleans, not values."""
+        for value in values:
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
+
+    @staticmethod
     def _normalize(p: dict[str, Any]) -> PersonResult:
-        phone = p.get("mobile_phone") or next(iter(p.get("phone_numbers") or []), None)
-        email = p.get("work_email") or next(iter(p.get("personal_emails") or []), None)
+        phone = PdlProvider._contact(
+            p.get("mobile_phone"), next(iter(p.get("phone_numbers") or []), None)
+        )
+        email = PdlProvider._contact(
+            p.get("work_email"), next(iter(p.get("personal_emails") or []), None)
+        )
         exp = p.get("inferred_years_experience")
         return PersonResult(
             source="pdl",

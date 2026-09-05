@@ -22,6 +22,7 @@ from app.integrations.hunar.client import FakeHunarClient, HttpHunarClient, Huna
 from app.integrations.llm.client import LlmService, OpenRouterLlm, RuleBasedLlm
 from app.integrations.people.apollo import ApolloProvider
 from app.integrations.people.base import PeopleProvider
+from app.integrations.people.coresignal import CoresignalProvider
 from app.integrations.people.mock import MockProvider
 from app.integrations.people.pdl import PdlProvider
 from app.modules.agents.router import router as agents_router
@@ -43,11 +44,16 @@ class HealthDto(ApiModel):
 
 
 def _build_providers(settings: Settings) -> dict[str, PeopleProvider]:
+    """Ordered as the UI lists them: the demo dataset, then the cheapest real source first."""
     providers: dict[str, PeopleProvider] = {"mock": MockProvider()}
+    if settings.pdl_api_key:
+        providers["pdl"] = PdlProvider(settings.pdl_api_key, sandbox=settings.pdl_sandbox)
+    if settings.coresignal_api_key:
+        providers["coresignal"] = CoresignalProvider(
+            settings.coresignal_api_key, max_collect=settings.coresignal_max_collect
+        )
     if settings.apollo_api_key:
         providers["apollo"] = ApolloProvider(settings.apollo_api_key)
-    if settings.pdl_api_key:
-        providers["pdl"] = PdlProvider(settings.pdl_api_key)
     return providers
 
 

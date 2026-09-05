@@ -128,8 +128,9 @@ async def test_people_search_and_import(client: AsyncClient) -> None:
     providers = (await client.get("/api/search/providers")).json()
     assert {p["name"]: p["configured"] for p in providers} == {
         "mock": True,
-        "apollo": False,
         "pdl": False,
+        "coresignal": False,
+        "apollo": False,
     }
 
 
