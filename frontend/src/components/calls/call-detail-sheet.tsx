@@ -21,6 +21,7 @@ import {
   useSyncCallMutation,
   useTranscribeCallMutation,
 } from "@/features/calls/api";
+import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import {
   formatDateTime,
@@ -249,9 +250,10 @@ export function CallDetailSheet({
   onClose: () => void;
 }) {
   const open = callId !== null;
+  const detailPoll = useLiveInterval(8000);
   const { data, error, isLoading, refetch } = useGetCallQuery(callId ?? "", {
     skip: !callId,
-    pollingInterval: 8000,
+    pollingInterval: detailPoll,
   });
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>

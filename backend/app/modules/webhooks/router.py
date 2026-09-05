@@ -56,7 +56,7 @@ async def hunar_webhook(request: Request, c: ContainerDep, response: Response) -
     trusted = sig_ok or not c.settings.hunar_api_key
     matched: str | None = None
     if trusted:
-        matched = await calls.apply_webhook(c.db, c.llm, payload)
+        matched = await calls.apply_webhook(c.db, c.llm, payload, bus=c.events)
     else:
         log.warning(
             "webhook_rejected", reason="bad_signature", event_type=payload.get("event_type")

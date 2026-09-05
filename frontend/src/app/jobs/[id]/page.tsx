@@ -49,6 +49,7 @@ import {
   useUpdateCandidateMutation,
 } from "@/features/candidates/api";
 import { useDeleteJobMutation, useGetJobQuery, useUpdateJobMutation } from "@/features/jobs/api";
+import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import { maskPhone } from "@/lib/format";
 import type { AgentDraft } from "@/types/agent";
@@ -404,13 +405,14 @@ const SOURCE_LABEL: Record<string, string> = {
 };
 
 function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }) {
+  const candidatesPoll = useLiveInterval(10000);
   const { data: config } = useGetConfigQuery();
   const {
     data: candidates,
     error,
     isLoading,
     refetch,
-  } = useGetCandidatesQuery({ jobId: job.id }, { pollingInterval: 10000 });
+  } = useGetCandidatesQuery({ jobId: job.id }, { pollingInterval: candidatesPoll });
   const [updateCandidate] = useUpdateCandidateMutation();
   const [deleteCandidate] = useDeleteCandidateMutation();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -622,9 +624,10 @@ function CandidateRow({
 }
 
 function CallsTab({ job }: { job: Job }) {
+  const callsPoll = useLiveInterval(8000);
   const { data, error, isLoading, refetch } = useGetCallsQuery(
     { jobId: job.id, pageSize: 100 },
-    { pollingInterval: 8000 },
+    { pollingInterval: callsPoll },
   );
   const [selected, setSelected] = useState<string | null>(null);
   if (isLoading) return <TableSkeleton />;

@@ -29,6 +29,7 @@ from app.modules.agents.router import router as agents_router
 from app.modules.calls.router import router as calls_router
 from app.modules.candidates.router import router as candidates_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.events.router import router as events_router
 from app.modules.jobs.router import router as jobs_router
 from app.modules.search.router import router as search_router
 from app.modules.webhooks.router import router as webhooks_router
@@ -169,6 +170,7 @@ def create_app(
     api.include_router(search_router)
     api.include_router(calls_router)
     api.include_router(dashboard_router)
+    api.include_router(events_router)
     app.include_router(api)
     app.include_router(webhooks_router)
     return app

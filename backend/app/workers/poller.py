@@ -18,7 +18,9 @@ async def run_poller(container: Container, stop: asyncio.Event) -> None:
     log.info("poller_started", interval=interval)
     while not stop.is_set():
         try:
-            synced, errors = await sync_pending(container.db, container.hunar, container.llm)
+            synced, errors = await sync_pending(
+                container.db, container.hunar, container.llm, bus=container.events
+            )
             if synced or errors:
                 log.info("poller_tick", synced=synced, errors=errors)
         except Exception as exc:

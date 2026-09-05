@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.core.deps import DbDep, HunarDep, LlmDep, SettingsDep
+from app.core.deps import DbDep, EventsDep, HunarDep, LlmDep, SettingsDep
 from app.core.pagination import Page
 from app.modules.calls import service
 from app.modules.calls.schemas import (
@@ -44,8 +44,8 @@ async def launch(
 
 
 @router.post("/sync", response_model=SyncAllResponse)
-async def sync_all(db: DbDep, hunar: HunarDep, llm: LlmDep) -> SyncAllResponse:
-    synced, errors = await service.sync_pending(db, hunar, llm, limit=100)
+async def sync_all(db: DbDep, hunar: HunarDep, llm: LlmDep, events: EventsDep) -> SyncAllResponse:
+    synced, errors = await service.sync_pending(db, hunar, llm, limit=100, bus=events)
     return SyncAllResponse(synced=synced, errors=errors)
 
 
@@ -55,8 +55,8 @@ async def get_call(id: str, db: DbDep) -> CallDto:
 
 
 @router.post("/{id}/sync", response_model=CallDto)
-async def sync_one(id: str, db: DbDep, hunar: HunarDep, llm: LlmDep) -> CallDto:
-    return await service.sync_call(db, hunar, llm, id, source="manual")
+async def sync_one(id: str, db: DbDep, hunar: HunarDep, llm: LlmDep, events: EventsDep) -> CallDto:
+    return await service.sync_call(db, hunar, llm, id, source="manual", bus=events)
 
 
 @router.post("/{id}/assess", response_model=CallDto)

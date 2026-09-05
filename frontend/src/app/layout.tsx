@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { AccessGate } from "@/components/access-gate";
 import { AppShell } from "@/components/app-shell";
 import { ThemeProvider, themeScript } from "@/components/theme";
+import { LiveProvider } from "@/features/live/live-provider";
 import { StoreProvider } from "@/store/provider";
 
 import "./globals.css";
@@ -33,9 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         <ThemeProvider>
           <StoreProvider>
-            <AppShell>
-              <AccessGate>{children}</AccessGate>
-            </AppShell>
+            <LiveProvider>
+              <AppShell>
+                <AccessGate>{children}</AccessGate>
+              </AppShell>
+            </LiveProvider>
             <Toaster
               position="top-right"
               closeButton

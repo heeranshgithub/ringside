@@ -18,6 +18,7 @@ import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/states";
 import { useGetCallsQuery, useSyncAllCallsMutation } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
+import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import { titleCase } from "@/lib/format";
 import type { CallStatus } from "@/types/call";
@@ -40,6 +41,7 @@ export default function CallsPage() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
   const { data: jobs } = useGetJobsQuery();
+  const callsPoll = useLiveInterval(10000);
 
   // Base UI renders the raw value in the trigger unless it is given the label map.
   const statusItems = useMemo(
@@ -57,7 +59,7 @@ export default function CallsPage() {
       page,
       pageSize: PAGE_SIZE,
     },
-    { pollingInterval: 10000 },
+    { pollingInterval: callsPoll },
   );
   const [syncAll, syncState] = useSyncAllCallsMutation();
   const jobTitles = Object.fromEntries((jobs ?? []).map((j) => [j.id, j.title]));

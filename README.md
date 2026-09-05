@@ -47,6 +47,22 @@ Key design decisions:
   than 50 per tick. So the app works locally without a public URL, and survives a dropped webhook in
   production.
 
+### Live updates
+
+Three hops carry a call's state, and each is push where it can be:
+
+| Hop | Mechanism |
+| --- | --- |
+| Hunar → backend | signed webhooks when `PUBLIC_BASE_URL` is set, otherwise a 30 s poller |
+| backend → browser | server-sent events on `GET /api/events` |
+| fallback | RTK Query refetch, which drops to 60 s while the stream is connected |
+
+The stream carries notifications, not state. An event names the call that moved and the
+browser refetches it through the normal API, so a dropped frame costs a few seconds of
+staleness rather than a wrong screen. It is an in-process fan-out, which means a second
+backend instance would only reach the browsers connected to it; that is the point to move
+to Redis pub/sub.
+
 ### Receiving real webhooks locally
 
 Hunar cannot reach `localhost`, so local runs poll by default. To get real pushes:
@@ -155,7 +171,8 @@ All routes are under `/api` and speak camelCase JSON. Errors always look like
 | Candidates | `GET/POST /candidates`, `POST /candidates/import-csv`, `PATCH/DELETE /candidates/{id}` |
 | People search | `GET /search/providers`, `POST /search/people`, `POST /search/import` |
 | Calls | `GET /calls`, `POST /calls/launch`, `POST /calls/sync`, `GET /calls/{id}`, `POST /calls/{id}/sync`, `POST /calls/{id}/assess`, `POST /calls/{id}/transcribe` |
-| Meta | `GET /config`, `GET /dashboard/summary`, `GET /health`, `POST /webhooks/hunar` (unauthenticated, HMAC-verified) |
+| Live | `GET /api/events` (server-sent events) |
+| Meta | `GET /config`, `GET /dashboard/summary`, `GET /health`, `POST /webhooks/hunar` (no access code, HMAC-verified) |
 
 ## Repository layout
 

@@ -10,6 +10,7 @@ from fastapi import Depends, Header, Request
 from app.core.config import Settings
 from app.core.db import Db
 from app.core.errors import Unauthorized
+from app.core.events import EventBus
 from app.integrations.hunar.client import HunarClient
 from app.integrations.llm.client import LlmService
 from app.integrations.people.base import PeopleProvider
@@ -22,6 +23,7 @@ class Container:
     hunar: HunarClient
     llm: LlmService
     providers: dict[str, PeopleProvider] = field(default_factory=dict)
+    events: EventBus = field(default_factory=EventBus)
     mongo_client: Any = None
 
 
@@ -49,10 +51,15 @@ def get_llm(c: ContainerDep) -> LlmService:
     return c.llm
 
 
+def get_events(c: ContainerDep) -> EventBus:
+    return c.events
+
+
 DbDep = Annotated[Db, Depends(get_db)]
 SettingsDep = Annotated[Settings, Depends(get_settings_dep)]
 HunarDep = Annotated[HunarClient, Depends(get_hunar)]
 LlmDep = Annotated[LlmService, Depends(get_llm)]
+EventsDep = Annotated[EventBus, Depends(get_events)]
 
 
 async def require_access(

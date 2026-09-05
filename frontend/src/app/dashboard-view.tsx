@@ -14,6 +14,7 @@ import { EmptyState, ErrorState, PageSkeleton } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
 import { useGetDashboardQuery, useSyncAllCallsMutation } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
+import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import { formatDuration, titleCase } from "@/lib/format";
 
@@ -30,8 +31,9 @@ function Stat({ label, value, hint }: { label: string; value: React.ReactNode; h
 }
 
 export function DashboardView() {
+  const dashboardPoll = useLiveInterval(15000);
   const { data, error, isLoading, refetch } = useGetDashboardQuery(undefined, {
-    pollingInterval: 15000,
+    pollingInterval: dashboardPoll,
   });
   const { data: jobs } = useGetJobsQuery();
   const [syncAll, syncState] = useSyncAllCallsMutation();

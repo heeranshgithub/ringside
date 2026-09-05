@@ -17,6 +17,7 @@ from app.core.errors import (
     LlmError,
     ValidationFailed,
 )
+from app.core.events import EventBus
 from app.core.models import new_id, parse_upstream_dt, utcnow
 from app.core.pagination import Page
 from app.integrations.hunar.client import HunarClient
@@ -274,8 +275,37 @@ async def _after_sync(db: Db, llm: LlmService, doc: dict[str, Any]) -> None:
         log.warning("assess_failed", call_id=doc["_id"], error=str(exc)[:200])
 
 
+def _announce(bus: EventBus | None, doc: dict[str, Any], before: dict[str, Any]) -> None:
+    """Tell listeners a call moved. Silence when nothing did, so a quiet poll stays quiet."""
+    if bus is None:
+        return
+    watched = ("status", "lifecycle_status", "engagement_status", "recording_url")
+    changed = [k for k in watched if before.get(k) != doc.get(k)]
+    if before.get("result") != doc.get("result"):
+        changed.append("result")
+    if not changed:
+        return
+    bus.publish(
+        "call.updated",
+        {
+            "callId": doc["_id"],
+            "jobId": doc.get("job_id"),
+            "candidateId": doc.get("candidate_id"),
+            "status": doc.get("status"),
+            "lifecycleStatus": doc.get("lifecycle_status"),
+            "changed": changed,
+        },
+    )
+
+
 async def sync_call(
-    db: Db, hunar: HunarClient, llm: LlmService, call_id: str, *, source: str = "poll"
+    db: Db,
+    hunar: HunarClient,
+    llm: LlmService,
+    call_id: str,
+    *,
+    source: str = "poll",
+    bus: EventBus | None = None,
 ) -> CallDto:
     doc = await get_call_doc(db, call_id)
     hc = await hunar.get_call(doc["hunar_call_id"])
@@ -286,12 +316,18 @@ async def sync_call(
         {"$set": {"latest_call_status": hc.status, "updated_at": utcnow()}},
     )
     fresh = await get_call_doc(db, call_id)
+    _announce(bus, fresh, doc)
     await _after_sync(db, llm, fresh)
     return CallDto.model_validate(await get_call_doc(db, call_id))
 
 
 async def sync_pending(
-    db: Db, hunar: HunarClient, llm: LlmService, *, limit: int = 50
+    db: Db,
+    hunar: HunarClient,
+    llm: LlmService,
+    *,
+    limit: int = 50,
+    bus: EventBus | None = None,
 ) -> tuple[int, int]:
     q = {
         "$or": [
@@ -305,7 +341,7 @@ async def sync_pending(
         if not needs_sync(doc):
             continue
         try:
-            await sync_call(db, hunar, llm, doc["_id"], source="poll")
+            await sync_call(db, hunar, llm, doc["_id"], source="poll", bus=bus)
             synced += 1
         except Exception as exc:
             errors += 1
@@ -313,7 +349,9 @@ async def sync_pending(
     return synced, errors
 
 
-async def apply_webhook(db: Db, llm: LlmService, payload: dict[str, Any]) -> str | None:
+async def apply_webhook(
+    db: Db, llm: LlmService, payload: dict[str, Any], *, bus: EventBus | None = None
+) -> str | None:
     """Apply a webhook event to our mirror. Returns our call id if matched."""
     hunar_call_id = payload.get("call_id") or payload.get("id")
     if not hunar_call_id:
@@ -362,6 +400,7 @@ async def apply_webhook(db: Db, llm: LlmService, payload: dict[str, Any]) -> str
             {"$set": {"latest_call_status": patch["status"], "updated_at": now}},
         )
     fresh = await get_call_doc(db, doc["_id"])
+    _announce(bus, fresh, doc)
     await _after_sync(db, llm, fresh)
     return str(doc["_id"])
 
