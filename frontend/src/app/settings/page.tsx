@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,10 +119,22 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Field label="Code stored in this browser" htmlFor="settings-code">
+            <Field
+              label="Code stored in this browser"
+              htmlFor="settings-code"
+              hint="Shown in full: it is a shared code, and hiding it from you helps nobody."
+            >
+              {/* Plain text, so a browser password manager never saves or re-fills it. */}
               <Input
                 id="settings-code"
-                type="password"
+                name="ringside-access-stored"
+                type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="not set"
+                className="font-mono tracking-wide"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
               />
@@ -132,6 +145,7 @@ export default function SettingsPage() {
                 onClick={() => {
                   setAccessCode(code.trim() || null);
                   void refetch();
+                  toast.success("Access code saved for this browser");
                 }}
               >
                 Save
@@ -143,9 +157,10 @@ export default function SettingsPage() {
                   setCode("");
                   setAccessCode(null);
                   void refetch();
+                  toast.success("Access code cleared. You will be asked for it again.");
                 }}
               >
-                Clear
+                Forget it
               </Button>
             </div>
           </CardContent>
