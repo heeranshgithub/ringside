@@ -22,9 +22,10 @@ Strategy: **restrained**. Neutrals plus one ambient hue, with a strict state voc
 | --- | --- | --- | --- |
 | Ambient (rail wash) | `--tint` at 7% | `--tint` at 11% | a soft vertical wash down the rail, nowhere else |
 | Tint (brand accent) | `#0E7F8A` | `#35A3AD` | focus rings, icon tiles, empty-state marks |
-| Sheet (workspace) | `#FFFFFF` | `#191A1C` | never translucent, fills the viewport |
-| Rail | `#F7FAFA` | `#131517` | solid, with the ambient wash on top |
-| Glass (overlays only) | `rgb(255 255 255 / .82)` | `rgb(28 30 32 / .86)` | `blur(20px) saturate(160%)` |
+| Page | `#F3F6F7` | `#141618` | the plane cards sit on; fills the viewport |
+| Card | `#FFFFFF` | `#1E2124` | the lifted plane, 1.1:1 against the page |
+| Rail | `#EDF3F4` | `#0F1113` | solid, with the ambient wash on top |
+| Glass (overlays only) | `rgb(255 255 255 / .86)` | `rgb(32 35 38 / .88)` | `blur(20px) saturate(160%)` |
 | Ink (foreground) | `#191818` | `#ECEEEF` | |
 | Action (primary) | `#1D1B19` | `#F0F2F2` | near-black, so the tint carries brand and buttons carry intent |
 
@@ -59,6 +60,14 @@ more type elements here than on a brand surface and exaggerated contrast becomes
 
 ## Surfaces and depth
 
+Three planes, always in the same order: **rail behind, page in the middle, cards lifted**. A card is
+never the same value as the page. In light that means a receded grey page with true-white cards over a
+real shadow; in dark it inverts, because you raise a surface with light, not with shade, so the card
+fill goes lighter and the shadow disappears. One token, `--card-shadow`, carries both cases.
+
+The elevation is applied to `[data-slot="card"]` so every shadcn Card inherits it untouched, and to a
+`.surface` class for the containers we author ourselves (tables, the dashboard entry panels).
+
 - `.halo-rail` — the navigation rail: a solid surface with the ambient wash fading out over its top 42%.
 - `.halo-glass` — frosted, `blur(20px) saturate(160%)`, for the mobile drawer, popovers and dialogs only.
   The saturation is what makes it read as glass rather than as a grey overlay.
@@ -77,6 +86,17 @@ an explicit three-way override (light / system / dark) in the rail. A blocking i
 class before first paint so there is no flash; the choice is external state read through
 `useSyncExternalStore`, not React state.
 
+## The mark
+
+A voice waveform bent into a ring: twelve radial ticks on a 24 grid, inner radius 5.7, stroke 1.95,
+round caps, drawn in `--tint`. The wordmark is `ringside`, lowercase, Onest 500 at −0.032em, so the mark
+stays the loudest element and carries the meaning.
+
+The tick count and weight are load-bearing. The first draft used twenty-two hairlines and fused into a
+solid disc at favicon size; twelve heavier ticks with round caps survive 16px. Do not add ticks or thin
+the stroke. Lives in `src/components/logo.tsx`, with `app/icon.svg` for the favicon and
+`app/apple-icon.tsx` rendering the home-screen tile as the mark knocked out of the Halo gradient.
+
 ## Components
 
 shadcn/ui over Base UI primitives, **restyled through tokens, never replaced**. Every shadcn token
@@ -92,9 +112,11 @@ Tables use tabular numerals so figures align down a column.
 
 1. The app is edge to edge. No frame, no page background, no rounded outer shell. A desktop wallpaper
    in a reference screenshot is the operating system, not the design.
-2. Never put `backdrop-filter` behind a table, a form, or any block of small text.
-3. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
-4. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
+2. `--card` and `--page` are never the same value. If a card needs a hairline to be visible at all,
+   the elevation is missing, not the border.
+3. Never put `backdrop-filter` behind a table, a form, or any block of small text.
+4. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
+5. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
    their name; it is a credit, not co-branding.
-5. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
-6. State is a lamp plus a word. A colour on its own is not a state.
+6. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
+7. State is a lamp plus a word. A colour on its own is not a state.

@@ -121,7 +121,7 @@ export default function DashboardPage() {
             <Link
               key={href}
               href={href}
-              className="border-border bg-card hover:border-tint/40 group flex flex-col rounded-xl border p-5 transition-colors"
+              className="surface hover:border-tint/40 group flex flex-col rounded-xl p-5 transition-colors"
             >
               <span
                 className="text-tint mb-3 grid size-9 place-items-center rounded-lg"

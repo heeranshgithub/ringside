@@ -71,7 +71,7 @@ export default function AgentsPage() {
         />
       )}
       {data && data.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="surface overflow-x-auto rounded-xl">
           <Table>
             <TableHeader>
               <TableRow>

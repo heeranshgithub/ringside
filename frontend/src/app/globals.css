@@ -26,7 +26,7 @@
   --font-heading: var(--font-sans);
 
   /* Halo surfaces */
-  --color-sheet: var(--sheet);
+  --color-page: var(--page);
   --color-rail: var(--rail);
   --color-hairline: var(--hairline);
 
@@ -91,21 +91,22 @@
   --halo-1: #c7eded;
   --rail-wash: color-mix(in oklab, var(--tint) 7%, transparent);
 
-  /* --- surfaces --- */
-  --sheet: #ffffff;
-  --background: var(--sheet);
-  --rail: #f7fafa;
-  --glass: rgb(255 255 255 / 0.82);
-  --hairline: rgb(25 24 24 / 0.08);
+  /* --- surfaces: three planes, cards lift off the page --- */
+  --page: #f3f6f7;
+  --background: var(--page);
+  --card: #ffffff;
+  --rail: #edf3f4;
+  --glass: rgb(255 255 255 / 0.86);
+  --hairline: rgb(25 24 24 / 0.07);
+  --card-shadow: 0 1px 2px rgb(16 44 48 / 0.07), 0 2px 6px -2px rgb(16 44 48 / 0.07);
 
   /* --- ink --- */
   --foreground: #191818;
   --muted-foreground: #6c6f70;
   --tint: #0e7f8a;
 
-  --card: var(--sheet);
   --card-foreground: var(--foreground);
-  --popover: rgb(255 255 255 / 0.86);
+  --popover: var(--glass);
   --popover-foreground: var(--foreground);
 
   /* --- actions: ink --- */
@@ -146,7 +147,7 @@
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--primary-foreground);
-  --sidebar-accent: rgb(255 255 255 / 0.95);
+  --sidebar-accent: #ffffff;
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--hairline);
   --sidebar-ring: var(--ring);
@@ -158,19 +159,20 @@
   --halo-1: #0f4249;
   --rail-wash: color-mix(in oklab, var(--tint) 11%, transparent);
 
-  --sheet: #191a1c;
-  --background: var(--sheet);
-  --rail: #131517;
-  --glass: rgb(28 30 32 / 0.86);
-  --hairline: rgb(255 255 255 / 0.08);
+  --page: #141618;
+  --background: var(--page);
+  --card: #1e2124;
+  --rail: #0f1113;
+  --glass: rgb(32 35 38 / 0.88);
+  --hairline: rgb(255 255 255 / 0.07);
+  --card-shadow: none;
 
   --foreground: #eceeef;
   --muted-foreground: #8d9295;
   --tint: #35a3ad;
 
-  --card: var(--sheet);
   --card-foreground: var(--foreground);
-  --popover: rgb(32 34 36 / 0.9);
+  --popover: var(--glass);
   --popover-foreground: var(--foreground);
 
   --primary: #f0f2f2;
@@ -198,7 +200,7 @@
   --ring: color-mix(in oklab, var(--tint) 60%, transparent);
 
   --sidebar: var(--rail);
-  --sidebar-accent: rgb(255 255 255 / 0.09);
+  --sidebar-accent: rgb(255 255 255 / 0.1);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--hairline);
 }
@@ -210,7 +212,7 @@
 
   html {
     @apply font-sans;
-    background: var(--sheet);
+    background: var(--page);
   }
 
   body {
@@ -259,6 +261,19 @@
 }
 
 @layer components {
+  /* Elevation. A card is a lifted plane: in light that means a shadow over a receded
+     page; in dark it means a lighter fill, because you raise a surface with light,
+     not with shade. Both are one token. */
+  [data-slot="card"],
+  .surface {
+    box-shadow: var(--card-shadow);
+  }
+  .surface {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
   /* the navigation rail: a solid surface with a soft ambient wash down its length */
   .halo-rail {
     background: linear-gradient(180deg, var(--rail-wash) 0%, transparent 42%), var(--rail);

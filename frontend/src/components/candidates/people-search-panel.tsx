@@ -173,7 +173,7 @@ export function PeopleSearchPanel({
         />
       ) : (
         <div className="space-y-3">
-          <div className="overflow-x-auto rounded-xl border">
+          <div className="surface overflow-x-auto rounded-xl">
             <Table>
               <TableHeader>
                 <TableRow>

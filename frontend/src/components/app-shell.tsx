@@ -21,6 +21,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { RingsideLogo } from "@/components/logo";
 import { useTheme, type ThemeChoice } from "@/components/theme";
 import { useGetConfigQuery } from "@/features/calls/api";
 import { cn } from "@/lib/utils";
@@ -136,15 +137,13 @@ function SafeDialPill() {
 
 function Brand({ onNavigate }: { onNavigate?: () => void }) {
   return (
-    <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 px-1.5 pt-1 pb-3">
-      <span
-        className="grid size-6 place-items-center rounded-[7px] text-[11.5px] font-bold text-white"
-        style={{ background: "linear-gradient(150deg, var(--halo-1), var(--tint))" }}
-        aria-hidden
-      >
-        R
-      </span>
-      <span className="text-[14px] font-semibold tracking-[-0.015em]">Ringside</span>
+    <Link
+      href="/"
+      onClick={onNavigate}
+      aria-label="Ringside, go to the dashboard"
+      className="rounded-md px-1.5 pt-1 pb-3"
+    >
+      <RingsideLogo />
     </Link>
   );
 }

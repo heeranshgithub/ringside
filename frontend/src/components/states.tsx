@@ -65,7 +65,7 @@ export function ErrorState({
 
 export function TableSkeleton({ rows = 6, cols = 5 }: { rows?: number; cols?: number }) {
   return (
-    <div className="border-border overflow-hidden rounded-xl border">
+    <div className="surface overflow-hidden rounded-xl">
       <div className="bg-muted/40 flex gap-3 px-4 py-2.5">
         {Array.from({ length: cols }).map((_, c) => (
           <Skeleton key={c} className="h-3 flex-1" />

@@ -24,7 +24,7 @@ export function CallsTable({
   jobTitles?: Record<string, string>;
 }) {
   return (
-    <div className="border-border overflow-x-auto rounded-xl border">
+    <div className="surface overflow-x-auto rounded-xl">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
