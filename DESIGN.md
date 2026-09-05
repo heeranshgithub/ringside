@@ -69,8 +69,11 @@ The elevation is applied to `[data-slot="card"]` so every shadcn Card inherits i
 `.surface` class for the containers we author ourselves (tables, the dashboard entry panels).
 
 - `.halo-rail` — the navigation rail: a solid surface with the ambient wash fading out over its top 42%.
-- `.halo-glass` — frosted, `blur(20px) saturate(160%)`, for the mobile drawer, popovers and dialogs only.
-  The saturation is what makes it read as glass rather than as a grey overlay.
+- `.halo-glass` — frosted, `blur(20px) saturate(160%)`. **Chrome only**: bars and rails that overlap
+  scrolling content and carry no reading text, which in practice is the mobile header. The saturation
+  is what makes it read as glass rather than as a grey overlay.
+- `--popover` is **opaque** and one step above the card, so menus, dialogs and drawers float on shadow
+  rather than on alpha. A translucent menu over a table is an unreadable menu.
 - Radius: 10px throughout (`--radius`). No page-level rounding; the app meets the viewport edge.
 
 ## Motion
@@ -120,7 +123,8 @@ Tables use tabular numerals so figures align down a column.
    in a reference screenshot is the operating system, not the design.
 2. `--card` and `--page` are never the same value. If a card needs a hairline to be visible at all,
    the elevation is missing, not the border.
-3. Never put `backdrop-filter` behind a table, a form, or any block of small text.
+3. Never put `backdrop-filter` or alpha behind a table, a form, a menu, or any block of reading text.
+   Overlays earn their separation from shadow and an opaque fill, never from transparency.
 4. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
 5. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
    their name; it is a credit, not co-branding.

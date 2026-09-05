@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               toastOptions={{
                 classNames: {
                   toast:
-                    "!bg-popover !text-popover-foreground !border-border !rounded-lg backdrop-blur-xl",
+                    "!bg-popover !text-popover-foreground !border-border !rounded-lg !shadow-lg",
                 },
               }}
             />

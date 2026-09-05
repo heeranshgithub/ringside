@@ -9,8 +9,8 @@
   The app fills the viewport. There is no window inside the window: the browser is the window.
   The ambient teal lives in real surfaces (the rail, icon tiles, focus, selection), never as a
   decorative frame around the page. Glass appears only where something genuinely overlaps
-  content (the mobile drawer, popovers, dialogs), never behind the data, because blur behind
-  small text is where glassmorphism dies.
+  content and carries no reading text, which in practice is the mobile header bar. Menus,
+  dialogs and drawers are opaque, because blur behind small text is where glassmorphism dies.
 
   Aqua ambient  · teal light washing the window edge  (--halo-*)
   Ink actions   · near-black primary, so the frame carries brand and buttons carry intent
@@ -106,7 +106,9 @@
   --tint: #0e7f8a;
 
   --card-foreground: var(--foreground);
-  --popover: var(--glass);
+  /* Opaque on purpose: a menu is a block of reading text, and anything you can see
+     the table through is a menu you cannot read. Menus float on shadow, not on alpha. */
+  --popover: #ffffff;
   --popover-foreground: var(--foreground);
 
   /* --- actions: ink --- */
@@ -172,7 +174,7 @@
   --tint: #35a3ad;
 
   --card-foreground: var(--foreground);
-  --popover: var(--glass);
+  --popover: #24282c;
   --popover-foreground: var(--foreground);
 
   --primary: #f0f2f2;
@@ -279,7 +281,8 @@
     background: linear-gradient(180deg, var(--rail-wash) 0%, transparent 42%), var(--rail);
   }
 
-  /* frosted, only for surfaces that genuinely sit over content */
+  /* Frosted. Chrome only: bars and rails that overlap scrolling content and carry no
+     reading text. Menus, dialogs and tooltips are opaque (see --popover). */
   .halo-glass {
     background: var(--glass);
     backdrop-filter: blur(20px) saturate(160%);
