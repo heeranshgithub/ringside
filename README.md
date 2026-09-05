@@ -33,9 +33,17 @@ JD ──► LLM parse ──► Job (criteria, screening questions)
 
 Key design decisions:
 
-- **Safe dial.** The Hunar key is a shared org key and the search providers return real people. Every outbound call is
-  routed to `TEST_PHONE_NUMBERS[0]` unless `SAFE_DIAL_MODE=false` **and** the candidate was explicitly cleared in the UI.
-  The agent still uses the candidate's real name, role and company, so the demo is realistic without cold-calling strangers.
+- **Safe dial.** The Hunar key is a shared org key and the search providers return real people, so the set
+  of reachable numbers is decided by the server, never by the browser. A call resolves to one of three, in order:
+  the candidate's own number (only when `SAFE_DIAL_MODE=false` **and** that candidate was cleared in the UI),
+  a number the visitor proved is theirs, or `TEST_PHONE_NUMBERS[0]`. The agent still uses the candidate's real
+  name, role and company, so the demo is realistic without cold-calling strangers.
+- **Bring your own phone.** With `ALLOW_CLIENT_DIAL_TARGET=true`, a visitor can nominate their own number and
+  hear the agent themselves. Ownership is proved by a call rather than a claim: the agent rings the number once,
+  reads a four-digit code, and only then will screening calls go there. That single call is the one place the
+  product dials a number nobody has vouched for, so it is capped per number and per session, needs an explicit
+  consent tick, and is written to a `dial_audit` trail alongside every screening call and where its number came
+  from. The flag **refuses to arm without `APP_ACCESS_CODE`**, so a leaked URL alone can never ring anyone.
 - **Own-data only.** The org behind the API key contains other people's agents and calls. The app never lists the org;
   it stores the IDs it created and fetches by ID.
 - **Webhooks and polling.** Hunar posts signed webhooks (HMAC-SHA256, secret = API key) to `/webhooks/hunar`.
@@ -137,7 +145,8 @@ See `backend/.env.example` for the full list. The ones that matter:
 | `PDL_API_KEY`, `PDL_SANDBOX` | People Data Labs. Sandbox mode costs no credits and is the default. |
 | `CORESIGNAL_API_KEY`, `CORESIGNAL_MAX_COLLECT` | Coresignal. Each profile shown costs 20 credits, so the cap is a spend limit. |
 | `APOLLO_API_KEY` | Apollo.io. API access is gated to their paid plans. |
-| `APP_ACCESS_CODE` | Optional shared code; when set the UI asks for it and sends it as `X-Access-Code`. |
+| `APP_ACCESS_CODE` | Optional shared code; when set the UI asks for it and sends it as `X-Access-Code`. Required for client dialling. |
+| `ALLOW_CLIENT_DIAL_TARGET` | Lets a visitor verify and use their own number. Off by default. |
 | `CORS_ORIGINS` | Comma-separated allowed origins (Amplify preview domains are allowed by regex). |
 
 The frontend needs only `NEXT_PUBLIC_API_BASE_URL`.
@@ -177,6 +186,7 @@ All routes are under `/api` and speak camelCase JSON. Errors always look like
 | People search | `GET /search/providers`, `POST /search/people`, `POST /search/import` |
 | Calls | `GET /calls`, `POST /calls/launch`, `POST /calls/sync`, `GET /calls/{id}`, `POST /calls/{id}/sync`, `POST /calls/{id}/assess`, `POST /calls/{id}/transcribe` |
 | Live | `GET /api/events` (server-sent events) |
+| Dial target | `GET /dial-target`, `GET /dial-target/current`, `POST /dial-target/start`, `POST /dial-target/{id}/confirm`, `DELETE /dial-target` |
 | Meta | `GET /config`, `GET /dashboard/summary`, `GET /health`, `POST /webhooks/hunar` (no access code, HMAC-verified) |
 
 ## Repository layout
