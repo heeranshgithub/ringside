@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 
 export function useCapability(key: string): Capability | undefined {
   const { data } = useGetConfigQuery();
-  return data?.capabilities.find((c) => c.key === key);
+  return data?.capabilities?.find((c) => c.key === key);
 }
 
 /** Inline banner for a feature the current screen depends on. */
@@ -73,7 +73,7 @@ export function CapabilityNotice({
 export function CredentialError({ error }: { error: ApiError }) {
   const { data } = useGetConfigQuery();
   if (getErrorCode(error) !== "credential_missing") return null;
-  const missing = data?.capabilities.filter((c) => c.state === "missing") ?? [];
+  const missing = data?.capabilities?.filter((c) => c.state === "missing") ?? [];
   return (
     <div className="border-fail-line bg-fail-bg flex items-start gap-3 rounded-xl border p-3.5 text-[13px]">
       <KeyRound className="text-fail mt-0.5 size-4 shrink-0" />

@@ -24,7 +24,8 @@ export interface Capability {
 
 export interface AppConfig {
   env: string;
-  capabilities: Capability[];
+  /** Added after the first release: an older backend will not send it. */
+  capabilities?: Capability[];
   safeDialMode: boolean;
   testPhoneNumbersMasked: string[];
   hunarEnabled: boolean;

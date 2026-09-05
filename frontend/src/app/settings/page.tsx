@@ -74,7 +74,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {data.capabilities.map((cap) => (
+            {/* A field the running backend may predate, during a rolling deploy or a
+                hot reload holding an older cached response. Never map it bare. */}
+            {(data.capabilities ?? []).map((cap) => (
               <Row
                 key={cap.key}
                 label={cap.label}
