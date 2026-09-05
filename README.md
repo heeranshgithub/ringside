@@ -55,6 +55,18 @@ Key design decisions:
   than 50 per tick. So the app works locally without a public URL, and survives a dropped webhook in
   production.
 
+### What is reachable without the access code
+
+Exactly two routes, and both are protected another way:
+
+| Route | Why it cannot be gated | What protects it |
+| --- | --- | --- |
+| `GET /health` | the platform's health check runs before any credential exists | returns nothing sensitive |
+| `POST /webhooks/hunar` | Hunar cannot send a header we invented | HMAC-SHA256 signature over the body |
+
+`tests/test_access_gate.py` asserts that set over the whole OpenAPI surface, so mounting a new router
+outside the gated one fails the suite rather than shipping quietly.
+
 ### Live updates
 
 Three hops carry a call's state, and each is push where it can be:
@@ -145,7 +157,7 @@ See `backend/.env.example` for the full list. The ones that matter:
 | `PDL_API_KEY`, `PDL_SANDBOX` | People Data Labs. Sandbox mode costs no credits and is the default. |
 | `CORESIGNAL_API_KEY`, `CORESIGNAL_MAX_COLLECT` | Coresignal. Each profile shown costs 20 credits, so the cap is a spend limit. |
 | `APOLLO_API_KEY` | Apollo.io. API access is gated to their paid plans. |
-| `APP_ACCESS_CODE` | Optional shared code; when set the UI asks for it and sends it as `X-Access-Code`. Required for client dialling. |
+| `APP_ACCESS_CODE` | Optional shared code. When set, **every `/api/*` route** returns 401 without it; the UI prompts once and stores it. Required for client dialling. |
 | `ALLOW_CLIENT_DIAL_TARGET` | Lets a visitor verify and use their own number. Off by default. |
 | `CORS_ORIGINS` | Comma-separated allowed origins (Amplify preview domains are allowed by regex). |
 
