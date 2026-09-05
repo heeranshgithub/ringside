@@ -38,9 +38,27 @@ Key design decisions:
   The agent still uses the candidate's real name, role and company, so the demo is realistic without cold-calling strangers.
 - **Own-data only.** The org behind the API key contains other people's agents and calls. The app never lists the org;
   it stores the IDs it created and fetches by ID.
-- **Webhooks and polling.** Hunar posts signed webhooks (HMAC-SHA256, secret = API key) to `/webhooks/hunar`. A
-  background poller also syncs every non-terminal call every 30 s, so the app works locally without a public URL and
-  survives missed webhooks in production.
+- **Webhooks and polling.** Hunar posts signed webhooks (HMAC-SHA256, secret = API key) to `/webhooks/hunar`.
+  A webhook is only applied when its signature verifies; the only exception is running with no API key at
+  all, where the fake client is in use and there is no secret to check against.
+  A background poller is the fallback: every 30 s it asks Mongo for calls that are not in a terminal state
+  (plus completed ones still waiting on a recording or result, for up to 15 minutes) and re-fetches just
+  those from `GET /calls/{id}`. It makes **no upstream requests when nothing is in flight**, and never more
+  than 50 per tick. So the app works locally without a public URL, and survives a dropped webhook in
+  production.
+
+### Receiving real webhooks locally
+
+Hunar cannot reach `localhost`, so local runs poll by default. To get real pushes:
+
+```bash
+cd backend && uv run python scripts/tunnel.py     # opens a cloudflared tunnel
+# writes PUBLIC_BASE_URL into backend/.env, then restart the backend
+```
+
+Quick tunnels get a new hostname each run, so the script rewrites the variable every time and clears it
+on exit. While the tunnel is open the backend is publicly reachable, so set `APP_ACCESS_CODE` to keep
+`/api` gated; `/webhooks/hunar` stays open by necessity and is protected by the signature check.
 - **camelCase on the wire, snake_case everywhere else.** One Pydantic base model does the conversion. Mongo documents
   are plain snake_case and never leave the service layer unconverted.
 - **Degrades gracefully.** No OpenRouter key → rule-based JD parsing, template agents and heuristic scoring.

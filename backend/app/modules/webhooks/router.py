@@ -47,11 +47,18 @@ async def hunar_webhook(request: Request, c: ContainerDep, response: Response) -
             "payload": payload,
         }
     )
-    # In prod an invalid signature is logged and ignored; in dev we still apply it so local
-    # testing with curl works. Either way we return 200 so Hunar stops retrying.
+    # A configured API key means real webhooks are possible, so the signature is the only
+    # thing that makes a request trustworthy, in every environment. Trusting dev by
+    # environment was safe on localhost and stops being safe the moment the backend is
+    # tunnelled, which is exactly when webhooks start working. With no key the fake client
+    # is in use and there is no secret to verify against, so unsigned posts are accepted.
+    # Either way we answer 200, so Hunar stops retrying a request we have decided about.
+    trusted = sig_ok or not c.settings.hunar_api_key
     matched: str | None = None
-    if sig_ok or c.settings.env != "prod":
+    if trusted:
         matched = await calls.apply_webhook(c.db, c.llm, payload)
     else:
-        log.warning("webhook_bad_signature", event=payload.get("event_type"))
+        log.warning(
+            "webhook_rejected", reason="bad_signature", event_type=payload.get("event_type")
+        )
     return WebhookAck(received=True, matched=matched is not None, signature_valid=sig_ok)
