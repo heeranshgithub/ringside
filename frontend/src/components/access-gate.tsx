@@ -12,6 +12,9 @@ import { useGetConfigQuery } from "@/features/calls/api";
 import { setAccessCode } from "@/lib/access-code";
 import { getErrorCode } from "@/lib/errors";
 
+/** Who to ask for a code. Shown only when someone actually gets one wrong. */
+const CONTACT_EMAIL = "heeranshconnect@gmail.com";
+
 export function AccessGate({ children }: { children: React.ReactNode }) {
   const { error, isLoading, isFetching, refetch } = useGetConfigQuery();
   const [code, setCode] = useState("");
@@ -70,7 +73,14 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
                 />
                 {rejected && (
                   <p id="access-code-error" role="alert" className="text-fail text-xs">
-                    That code is not right. Check it with whoever shared the link.
+                    That code is not right. Email{" "}
+                    <a
+                      href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent("Ringside access code")}`}
+                      className="text-fail font-medium underline underline-offset-2"
+                    >
+                      {CONTACT_EMAIL}
+                    </a>{" "}
+                    to get one.
                   </p>
                 )}
               </div>
