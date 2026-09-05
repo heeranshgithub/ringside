@@ -62,9 +62,11 @@ async def _app() -> AsyncIterator[tuple[AsyncClient, list[tuple[str, str]]]]:
         for method in ops
         if method in verbs
     ]
-    async with app.router.lifespan_context(app):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as client:
-            yield client, surface
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as client,
+    ):
+        yield client, surface
 
 
 async def test_every_route_is_gated_except_a_named_two() -> None:
