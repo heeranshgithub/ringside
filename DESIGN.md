@@ -74,6 +74,10 @@ The elevation is applied to `[data-slot="card"]` so every shadcn Card inherits i
   is what makes it read as glass rather than as a grey overlay.
 - `--popover` is **opaque** and one step above the card, so menus, dialogs and drawers float on shadow
   rather than on alpha. A translucent menu over a table is an unreadable menu.
+- Selects open **below their trigger**, never overlapping it. Base UI's `alignItemWithTrigger` mode
+  aligns the chosen item over the trigger like a macOS select, but it positions once and assumes the
+  page is scroll-locked. This app scrolls inside `<main>`, not the document, so that lock never
+  applies and the menu is left behind the moment the user scrolls. The wrapper defaults it to `false`.
 - Radius: 10px throughout (`--radius`). No page-level rounding; the app meets the viewport edge.
 
 ## Motion
@@ -130,3 +134,5 @@ Tables use tabular numerals so figures align down a column.
    their name; it is a credit, not co-branding.
 6. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
 7. State is a lamp plus a word. A colour on its own is not a state.
+8. The app scrolls inside `<main>`, not the document. Any anchored overlay must be verified by
+   scrolling with it open; a popup that positions once will silently detach.
