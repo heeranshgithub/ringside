@@ -69,13 +69,22 @@ def test_mask_and_pretty() -> None:
 
 
 def _settings(**kw: object) -> Settings:
+    """Settings built from nothing but these values.
+
+    `_env_file=None` matters: without it pydantic-settings reads the developer's real
+    backend/.env, and a test asserting "no access code is configured" quietly starts
+    passing or failing depending on whose machine it runs on.
+    """
     base: dict[str, object] = {
         "env": "test",
         "mongodb_uri": "mongodb://unused",
         "hunar_api_key": "k",
         "test_phone_numbers": "+919999900000",
+        "app_access_code": "",
+        "allow_client_dial_target": False,
+        "safe_dial_mode": True,
     }
-    return Settings(**{**base, **kw})  # type: ignore[arg-type]
+    return Settings(_env_file=None, **{**base, **kw})  # type: ignore[arg-type]
 
 
 def test_safe_dial_uses_the_server_number_by_default() -> None:
