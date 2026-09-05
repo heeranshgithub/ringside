@@ -4,7 +4,7 @@ import { PhoneMissed, Radio, ShieldAlert, Sun } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/page-header";
 
-export const metadata: Metadata = { title: "Attendance without smartphones" };
+export const metadata: Metadata = { title: "Attendance" };
 
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (

@@ -17,7 +17,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Ringside", template: "%s · Ringside" },
+  // The favicon carries the brand; the tab text carries the screen you are on,
+  // because tab titles truncate and "ringside | …" spends the space on what you know.
+  title: "ringside",
   description:
     "Voice-first hiring assistant. Screen candidates and reach out to sourced talent with Hunar.AI voice agents.",
 };

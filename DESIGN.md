@@ -94,8 +94,14 @@ stays the loudest element and carries the meaning.
 
 The tick count and weight are load-bearing. The first draft used twenty-two hairlines and fused into a
 solid disc at favicon size; twelve heavier ticks with round caps survive 16px. Do not add ticks or thin
-the stroke. Lives in `src/components/logo.tsx`, with `app/icon.svg` for the favicon and
-`app/apple-icon.tsx` rendering the home-screen tile as the mark knocked out of the Halo gradient.
+the stroke. Lives in `src/components/logo.tsx`, with `app/icon.svg` for the favicon and `app/apple-icon.tsx`
+rendering the home-screen tile as the mark knocked out of the Halo gradient. The favicon is drawn at
+stroke 2.5 rather than the in-app 1.95, because 16px eats weight.
+
+**Browser tabs carry the screen name only** — "Dashboard", "Calls", "New job" — with no brand prefix.
+The favicon carries the brand. Tab titles truncate early, so a prefix spends the visible characters on
+what the reader already knows and hides where they are; it also makes several open tabs identical.
+Client pages cannot export metadata, so each route segment holds a small `layout.tsx` that does.
 
 ## Components
 

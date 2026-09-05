@@ -53,7 +53,7 @@ export function RingsideLogo({
   wordClassName?: string;
 }) {
   return (
-    <span className={cn("flex items-center gap-2.5", className)}>
+    <span className={cn("flex items-center gap-1.5", className)}>
       <RingsideMark className={cn("text-tint size-[22px] shrink-0", markClassName)} />
       <span className={cn("text-[15px] font-medium tracking-[-0.032em] lowercase", wordClassName)}>
         ringside
