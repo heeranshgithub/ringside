@@ -20,9 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DialTargetCard } from "@/components/dial/dial-target-card";
 import { Field } from "@/components/field";
 import { useGetAgentsQuery } from "@/features/agents/api";
 import { useGetConfigQuery, useLaunchCallsMutation } from "@/features/calls/api";
+import { useGetDialTargetQuery } from "@/features/dial/api";
 import { getErrorMessage } from "@/lib/errors";
 import type { Candidate } from "@/types/candidate";
 import type { LaunchCallsResult } from "@/types/call";
@@ -60,6 +62,7 @@ export function LaunchCallsDialog({
   onLaunched?: (result: LaunchCallsResult) => void;
 }) {
   const { data: config } = useGetConfigQuery();
+  const { data: dialTarget } = useGetDialTargetQuery();
   const { data: agents } = useGetAgentsQuery();
   const [launch, { isLoading }] = useLaunchCallsMutation();
   const [agentId, setAgentId] = useState<string | null>(defaultAgentId);
@@ -134,13 +137,22 @@ export function LaunchCallsDialog({
               ) : (
                 <>
                   <span className="font-medium">Safe dial is on.</span> Every call is routed to{" "}
-                  {config?.testPhoneNumbersMasked[0] ?? "the test number (none configured yet)"};
-                  the candidate&apos;s own number is never dialled. The agent still uses the
+                  {dialTarget?.verified ? (
+                    <span className="font-medium">
+                      your verified number {dialTarget.phonePretty}
+                    </span>
+                  ) : (
+                    (config?.testPhoneNumbersMasked[0] ??
+                    "no number yet, so every call will be skipped")
+                  )}
+                  ; the candidate&apos;s own number is never dialled. The agent still uses the
                   candidate&apos;s name and role.
                 </>
               )}
             </div>
           </div>
+
+          <DialTargetCard />
 
           <Field label="Voice agent" htmlFor="launch-agent">
             <Select value={effectiveAgent ?? ""} onValueChange={(v) => setAgentId(v)}>

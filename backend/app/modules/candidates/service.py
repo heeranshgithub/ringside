@@ -8,6 +8,7 @@ from typing import Any
 from app.core.db import Db, as_doc
 from app.core.errors import CandidateNotFound, ValidationFailed
 from app.core.models import new_id, utcnow
+from app.core.phone import normalize_phone
 from app.integrations.people.base import PersonResult
 from app.modules.candidates.schemas import (
     CandidateDto,
@@ -16,22 +17,6 @@ from app.modules.candidates.schemas import (
     UpdateCandidateRequest,
 )
 from app.modules.jobs.service import get_job_doc
-
-_E164 = re.compile(r"^\+[1-9]\d{7,14}$")
-
-
-def normalize_phone(raw: str | None, default_cc: str = "+91") -> str | None:
-    if not raw:
-        return None
-    digits = re.sub(r"[^\d+]", "", raw.strip())
-    if digits.startswith("00"):
-        digits = "+" + digits[2:]
-    if not digits.startswith("+"):
-        digits = digits.lstrip("0")
-        digits = default_cc + digits if len(digits) == 10 else "+" + digits
-    if not _E164.match(digits):
-        raise ValidationFailed(f"Phone number '{raw}' is not a valid E.164 number")
-    return digits
 
 
 def _doc_from_request(body: CreateCandidateRequest) -> dict[str, Any]:

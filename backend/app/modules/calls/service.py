@@ -36,6 +36,7 @@ from app.modules.calls.schemas import (
     LaunchCallsResponse,
     SkippedCandidateDto,
 )
+from app.modules.dial.service import audit as dial_audit
 from app.modules.jobs.service import get_job_doc, job_for_llm
 
 log = structlog.get_logger()
@@ -46,19 +47,35 @@ _UNKNOWN = {"", "unknown", "not available", "n/a", "none", "null"}
 # ---------- dialling ----------
 
 
-def resolve_dial_number(candidate: dict[str, Any], settings: Settings) -> tuple[str, bool]:
-    """Return (number_to_dial, is_safe_dial). Real numbers are dialled only when safe-dial mode is
-    off globally AND the candidate was explicitly cleared for a real call."""
+def resolve_dial_number(
+    candidate: dict[str, Any], settings: Settings, *, verified_target: str | None = None
+) -> tuple[str, bool, str]:
+    """Decide what actually rings. Returns (number, is_safe_dial, source).
+
+    Three ways a number becomes reachable, in order of precedence:
+
+      real     the candidate's own number, only when safe dial is off globally AND that
+               candidate was explicitly cleared in the UI
+      session  a number this visitor proved is theirs by answering a verification call
+      env      TEST_PHONE_NUMBERS, the operator's own device
+
+    A browser can influence only the middle one, and only after the verification call.
+    """
     real_allowed = (not settings.safe_dial_mode) and bool(candidate.get("allow_real_dial"))
     if real_allowed:
         if not candidate.get("phone"):
             raise ValidationFailed("Candidate has no phone number")
-        return str(candidate["phone"]), False
+        return str(candidate["phone"]), False, "real"
+
+    if verified_target:
+        return verified_target, True, "session"
+
     if not settings.test_phone_numbers:
         raise ValidationFailed(
-            "Safe-dial mode is on but TEST_PHONE_NUMBERS is empty. Add a verified test number."
+            "Safe dial is on but no number is available. Verify your own number, or set "
+            "TEST_PHONE_NUMBERS on the server."
         )
-    return settings.test_phone_numbers[0], True
+    return settings.test_phone_numbers[0], True, "env"
 
 
 def build_custom_data(
@@ -98,7 +115,13 @@ def _callback_config(settings: Settings) -> CallbackConfig | None:
 
 
 async def launch_calls(
-    db: Db, hunar: HunarClient, settings: Settings, body: LaunchCallsRequest
+    db: Db,
+    hunar: HunarClient,
+    settings: Settings,
+    body: LaunchCallsRequest,
+    *,
+    verified_target: str | None = None,
+    session_id: str | None = None,
 ) -> LaunchCallsResponse:
     if not settings.hunar_enabled and settings.env != "test":
         raise FeatureDisabled("HUNAR_API_KEY is not configured.")
@@ -122,7 +145,9 @@ async def launch_calls(
             continue
         candidate = as_doc(candidate_raw)
         try:
-            dialed, safe = resolve_dial_number(candidate, settings)
+            dialed, safe, dial_source = resolve_dial_number(
+                candidate, settings, verified_target=verified_target
+            )
         except ValidationFailed as exc:
             skipped.append(SkippedCandidateDto(candidate_id=cid, reason=exc.message))
             continue
@@ -158,6 +183,7 @@ async def launch_calls(
             "target_number": candidate.get("phone"),
             "dialed_number": dialed,
             "safe_dial": safe,
+            "dial_source": dial_source,
             "custom_data": custom_data,
             "status": created.status,
             "lifecycle_status": "NOT_STARTED" if created.status == "NOT_STARTED" else "IN_PROGRESS",
@@ -189,6 +215,13 @@ async def launch_calls(
             "updated_at": now,
         }
         await db.calls.insert_one(doc)
+        await dial_audit(
+            db,
+            action="screening_call_placed",
+            phone=dialed,
+            session_id=session_id or "server",
+            detail={"callId": doc["_id"], "source": dial_source, "candidateId": cid},
+        )
         await db.candidates.update_one(
             {"_id": cid},
             {

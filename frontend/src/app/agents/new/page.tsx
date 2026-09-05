@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AgentForm, type AgentFormOutput } from "@/components/agents/agent-form";
+import { CapabilityNotice } from "@/components/capability-notice";
 import { PageHeader } from "@/components/page-header";
 import { useCreateAgentMutation } from "@/features/agents/api";
 import { getErrorMessage } from "@/lib/errors";
@@ -54,6 +55,7 @@ export default function NewAgentPage() {
         title="New voice agent"
         description="Write the prompts by hand. Placeholders in braces are filled per call."
       />
+      <CapabilityNotice capability="hunar" />
       <Card>
         <CardHeader>
           <CardTitle>Agent definition</CardTitle>

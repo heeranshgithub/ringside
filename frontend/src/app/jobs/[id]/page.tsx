@@ -33,6 +33,7 @@ import { CallsTable } from "@/components/calls/calls-table";
 import { LaunchCallsDialog } from "@/components/calls/launch-calls-dialog";
 import { AddCandidateDialog, ImportCsvDialog } from "@/components/candidates/candidate-dialogs";
 import { PeopleSearchPanel } from "@/components/candidates/people-search-panel";
+import { CapabilityNotice } from "@/components/capability-notice";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, PageSkeleton, TableSkeleton } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
@@ -319,6 +320,8 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
 
   return (
     <div className="space-y-4">
+      <CapabilityNotice capability="hunar" />
+      <CapabilityNotice capability="llm" />
       {!draft && (
         <Card>
           <CardHeader>
@@ -436,6 +439,7 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
 
   return (
     <div className="space-y-4">
+      <CapabilityNotice capability="dialling" />
       <div className="flex flex-wrap items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
           <UserPlus data-icon="inline-start" /> Add

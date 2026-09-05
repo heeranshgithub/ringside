@@ -37,6 +37,16 @@ class Settings(BaseSettings):
     safe_dial_mode: bool = True
     test_phone_numbers_raw: str = Field(default="", validation_alias="test_phone_numbers")
 
+    # Let a visitor nominate their own phone as this session's safe-dial target, proven by a
+    # short verification call. Off by default: with it on, the app will ring a number a
+    # browser supplied, so it must never switch on by accident.
+    allow_client_dial_target: bool = False
+    dial_verify_per_number_per_day: int = 3
+    dial_verify_per_session_per_day: int = 5
+    dial_target_ttl_hours: int = 12
+    dial_code_ttl_minutes: int = 10
+    dial_code_max_attempts: int = 5
+
     # Background sync of non-terminal calls (fallback when webhooks cannot reach us).
     poller_enabled: bool = True
     poller_interval_seconds: int = 30
@@ -47,6 +57,9 @@ class Settings(BaseSettings):
     llm_model: str = "anthropic/claude-sonnet-5"
     llm_audio_model: str = "google/gemini-2.5-flash"
     llm_app_name: str = "Ringside"
+    # Off by default: the rule-based parser produces output that looks like model output
+    # and is not, so it has to be asked for rather than arrived at by forgetting a key.
+    allow_degraded_llm: bool = False
 
     # People search providers. PDL is the primary: 100 free searches a month, plus a
     # zero-credit sandbox with an identical schema for development.
@@ -77,6 +90,20 @@ class Settings(BaseSettings):
     @property
     def webhooks_enabled(self) -> bool:
         return bool(self.public_base_url)
+
+    @property
+    def client_dial_enabled(self) -> bool:
+        """An access code is not optional here. Without one, anyone holding the URL could
+        make the product ring an arbitrary phone, so the feature refuses to arm itself."""
+        return self.allow_client_dial_target and bool(self.app_access_code)
+
+    @property
+    def client_dial_blocked_reason(self) -> str | None:
+        if not self.allow_client_dial_target:
+            return None
+        if not self.app_access_code:
+            return "ALLOW_CLIENT_DIAL_TARGET needs APP_ACCESS_CODE set as well"
+        return None
 
     def redact(self) -> dict[str, Any]:
         out: dict[str, Any] = {}

@@ -2,8 +2,17 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 import { env } from "@/lib/env";
 import { getAccessCode } from "@/lib/access-code";
+import { getSessionId } from "@/lib/session";
 
-export const TAG_TYPES = ["Job", "Agent", "Candidate", "Call", "Dashboard", "Config"] as const;
+export const TAG_TYPES = [
+  "Job",
+  "Agent",
+  "Candidate",
+  "Call",
+  "Dashboard",
+  "Config",
+  "DialTarget",
+] as const;
 export type TagType = (typeof TAG_TYPES)[number];
 
 /** The most recent x-request-id, surfaced in error UI for log correlation. */
@@ -25,6 +34,8 @@ export const api = createApi({
     prepareHeaders: (headers) => {
       const code = getAccessCode();
       if (code) headers.set("x-access-code", code);
+      const session = getSessionId();
+      if (session) headers.set("x-session-id", session);
       return headers;
     },
   }),

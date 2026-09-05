@@ -18,7 +18,8 @@ from app.core.deps import Container, require_access
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.core.models import ApiModel
-from app.integrations.hunar.client import FakeHunarClient, HttpHunarClient, HunarClient
+from app.core.unconfigured import UnconfiguredHunarClient, UnconfiguredLlm
+from app.integrations.hunar.client import HttpHunarClient, HunarClient
 from app.integrations.llm.client import LlmService, OpenRouterLlm, RuleBasedLlm
 from app.integrations.people.apollo import ApolloProvider
 from app.integrations.people.base import PeopleProvider
@@ -29,6 +30,7 @@ from app.modules.agents.router import router as agents_router
 from app.modules.calls.router import router as calls_router
 from app.modules.candidates.router import router as candidates_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.dial.router import router as dial_router
 from app.modules.events.router import router as events_router
 from app.modules.jobs.router import router as jobs_router
 from app.modules.search.router import router as search_router
@@ -67,14 +69,27 @@ def _build_llm(settings: Settings) -> LlmService:
             settings.llm_audio_model,
             settings.llm_app_name,
         )
-    return RuleBasedLlm()
+    if settings.allow_degraded_llm:
+        log.warning(
+            "llm_degraded",
+            note="ALLOW_DEGRADED_LLM is on; parsing and scoring are rule-based, not model output",
+        )
+        return RuleBasedLlm()
+    log.warning("llm_unconfigured", note="OPENROUTER_API_KEY missing; LLM features will refuse")
+    return UnconfiguredLlm()
 
 
 def _build_hunar(settings: Settings) -> HunarClient:
+    """No key means refuse, never simulate.
+
+    The in-memory fake returns ids and agent codes indistinguishable from real ones, so a
+    misconfigured deployment would look like it was working until a restart wiped it.
+    Tests inject FakeHunarClient directly; nothing reaches it by accident.
+    """
     if settings.hunar_api_key:
         return HttpHunarClient(settings.hunar_api_key, settings.hunar_base_url)
-    log.warning("hunar_key_missing", note="Using FakeHunarClient; calls will be simulated")
-    return FakeHunarClient()
+    log.warning("hunar_unconfigured", note="HUNAR_API_KEY missing; agents and calls will refuse")
+    return UnconfiguredHunarClient()
 
 
 def create_app(
@@ -171,6 +186,7 @@ def create_app(
     api.include_router(calls_router)
     api.include_router(dashboard_router)
     api.include_router(events_router)
+    api.include_router(dial_router)
     app.include_router(api)
     app.include_router(webhooks_router)
     return app

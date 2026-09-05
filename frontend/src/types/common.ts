@@ -13,8 +13,18 @@ export interface Page<T> {
   pageSize: number;
 }
 
+export interface Capability {
+  key: string;
+  label: string;
+  /** ok = real credentials · degraded = a deliberate offline stand-in · missing = will refuse */
+  state: "ok" | "degraded" | "missing";
+  detail: string;
+  envVar: string | null;
+}
+
 export interface AppConfig {
   env: string;
+  capabilities: Capability[];
   safeDialMode: boolean;
   testPhoneNumbersMasked: string[];
   hunarEnabled: boolean;
@@ -25,4 +35,5 @@ export interface AppConfig {
   pollerIntervalSeconds: number;
   providers: string[];
   accessCodeRequired: boolean;
+  clientDialEnabled: boolean;
 }

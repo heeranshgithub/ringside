@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/lib/api";
 import { getAccessCode } from "@/lib/access-code";
+import { getSessionId } from "@/lib/session";
 import { env } from "@/lib/env";
 import { useAppDispatch } from "@/store/hooks";
 
@@ -73,6 +74,8 @@ export function useLiveEvents(): boolean {
           const headers: Record<string, string> = { Accept: "text/event-stream" };
           const code = getAccessCode();
           if (code) headers["x-access-code"] = code;
+          const session = getSessionId();
+          if (session) headers["x-session-id"] = session;
 
           const res = await fetch(`${env.NEXT_PUBLIC_API_BASE_URL}/api/events`, {
             headers,

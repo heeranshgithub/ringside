@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/field";
+import { DialTargetCard } from "@/components/dial/dial-target-card";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState, PageSkeleton } from "@/components/states";
 import { useGetConfigQuery } from "@/features/calls/api";
@@ -61,39 +62,48 @@ export default function SettingsPage() {
               ok={data.testPhoneNumbersMasked.length > 0}
             />
             <Row label="Environment" value={data.env} />
+            <DialTargetCard className="mt-3" />
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle>Integrations</CardTitle>
-            <CardDescription>Which upstreams are configured on this deployment.</CardDescription>
+            <CardDescription>
+              What this deployment can actually do. Anything missing is refused with a clear error,
+              never quietly simulated.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Row
-              label="Hunar Voice API"
-              value={data.hunarEnabled ? "configured" : "missing key (calls are simulated)"}
-              ok={data.hunarEnabled}
-            />
-            <Row
-              label="Webhooks"
-              value={data.webhooksEnabled ? "enabled" : "off (polling only)"}
-              ok={data.webhooksEnabled}
-            />
-            <Row
-              label="Poller"
-              value={data.pollerEnabled ? `every ${data.pollerIntervalSeconds}s` : "off"}
-              ok={data.pollerEnabled}
-            />
-            <Row
-              label="LLM"
-              value={data.llmEnabled ? data.llmModel : "rule-based fallback"}
-              ok={data.llmEnabled}
-            />
-            <Row
-              label="People providers"
-              value={data.providers.join(", ")}
-              ok={data.providers.length > 1}
-            />
+            {data.capabilities.map((cap) => (
+              <Row
+                key={cap.key}
+                label={cap.label}
+                ok={cap.state === "ok"}
+                value={
+                  <span className="flex flex-col items-end">
+                    <span
+                      className={
+                        cap.state === "ok"
+                          ? "text-done"
+                          : cap.state === "degraded"
+                            ? "text-live-ink"
+                            : "text-fail"
+                      }
+                    >
+                      {cap.state === "ok"
+                        ? "configured"
+                        : cap.state === "degraded"
+                          ? "degraded"
+                          : "not configured"}
+                    </span>
+                    <span className="text-muted-foreground max-w-80 text-right text-[11.5px]">
+                      {cap.detail}
+                      {cap.envVar ? ` Set ${cap.envVar}.` : ""}
+                    </span>
+                  </span>
+                }
+              />
+            ))}
           </CardContent>
         </Card>
         <Card>

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter
 from pydantic import Field
@@ -27,8 +27,20 @@ class DashboardSummaryDto(ApiModel):
     recent_calls: list[CallDto] = Field(default_factory=list)
 
 
+class CapabilityDto(ApiModel):
+    """One integration, and whether it will actually do anything."""
+
+    key: str
+    label: str
+    # ok = real credentials · degraded = a deliberate offline stand-in · missing = will refuse
+    state: Literal["ok", "degraded", "missing"]
+    detail: str
+    env_var: str | None = None
+
+
 class ConfigDto(ApiModel):
     env: str
+    capabilities: list[CapabilityDto] = Field(default_factory=list)
     safe_dial_mode: bool
     test_phone_numbers_masked: list[str]
     hunar_enabled: bool
@@ -39,10 +51,77 @@ class ConfigDto(ApiModel):
     poller_interval_seconds: int
     providers: list[str]
     access_code_required: bool
+    client_dial_enabled: bool
 
 
 def _mask(phone: str) -> str:
     return phone[:3] + "•" * max(0, len(phone) - 6) + phone[-3:] if len(phone) > 6 else "•••"
+
+
+def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
+    s = c.settings
+    caps = [
+        CapabilityDto(
+            key="hunar",
+            label="Hunar voice platform",
+            state="ok" if s.hunar_enabled else "missing",
+            detail=(
+                "Agents and calls go to the real API."
+                if s.hunar_enabled
+                else "Creating agents and placing calls will be refused, never simulated."
+            ),
+            env_var=None if s.hunar_enabled else "HUNAR_API_KEY",
+        ),
+        CapabilityDto(
+            key="llm",
+            label="Language model",
+            state="ok" if c.llm.enabled else ("degraded" if s.allow_degraded_llm else "missing"),
+            detail=(
+                f"Parsing, drafting and scoring use {s.llm_model}."
+                if c.llm.enabled
+                else (
+                    "Offline rule-based parser. Looks like model output, but is keyword matching."
+                    if s.allow_degraded_llm
+                    else "Job parsing, agent drafting, scoring and transcription will be refused."
+                )
+            ),
+            env_var=None if c.llm.enabled else "OPENROUTER_API_KEY",
+        ),
+        CapabilityDto(
+            key="dialling",
+            label="Safe dial target",
+            state="ok" if s.test_phone_numbers else "missing",
+            detail=(
+                "Every call is routed to the verified test number."
+                if s.test_phone_numbers
+                else "No test number, so every call launch will be skipped."
+            ),
+            env_var=None if s.test_phone_numbers else "TEST_PHONE_NUMBERS",
+        ),
+        CapabilityDto(
+            key="people_search",
+            label="People search",
+            state="ok" if len(c.providers) > 1 else "degraded",
+            detail=(
+                f"Live providers: {', '.join(sorted(k for k in c.providers if k != 'mock'))}."
+                if len(c.providers) > 1
+                else "Only the seeded demo dataset. No third-party source is configured."
+            ),
+            env_var=None if len(c.providers) > 1 else "PDL_API_KEY",
+        ),
+        CapabilityDto(
+            key="webhooks",
+            label="Call webhooks",
+            state="ok" if s.webhooks_enabled else "degraded",
+            detail=(
+                "Hunar pushes call updates directly to this backend."
+                if s.webhooks_enabled
+                else "No public URL, so updates arrive only from the background poller."
+            ),
+            env_var=None if s.webhooks_enabled else "PUBLIC_BASE_URL",
+        ),
+    ]
+    return caps
 
 
 @router.get("/config", response_model=ConfigDto)
@@ -54,12 +133,14 @@ async def config(c: ContainerDep) -> ConfigDto:
         test_phone_numbers_masked=[_mask(p) for p in s.test_phone_numbers],
         hunar_enabled=s.hunar_enabled,
         llm_enabled=c.llm.enabled,
-        llm_model=s.llm_model if c.llm.enabled else "rule-based fallback",
+        llm_model=s.llm_model if c.llm.enabled else "not configured",
+        capabilities=_capabilities(c),
         webhooks_enabled=s.webhooks_enabled,
         poller_enabled=s.poller_enabled,
         poller_interval_seconds=s.poller_interval_seconds,
         providers=sorted(c.providers.keys()),
         access_code_required=bool(s.app_access_code),
+        client_dial_enabled=s.client_dial_enabled,
     )
 
 

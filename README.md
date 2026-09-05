@@ -82,8 +82,13 @@ on exit. While the tunnel is open the backend is publicly reachable, so set `APP
   *search* is real and affordable, never on whether it sells contact data, and the contact-data tier
   of every provider is irrelevant here. Cold-calling strangers pulled from a B2B database to
   demonstrate a product is not something this repo does.
-- **Degrades gracefully.** No OpenRouter key → rule-based JD parsing, template agents and heuristic scoring.
-  No Hunar key → an in-memory fake that completes calls with sample results. No provider keys → the demo dataset.
+- **A missing key refuses; it never pretends.** Without `HUNAR_API_KEY` the app will not create agents or
+  place calls, it returns a 503 naming the variable to set. Without `OPENROUTER_API_KEY` the LLM features
+  do the same. The in-memory simulators still exist and the tests inject them, but nothing reaches them by
+  forgetting to configure something, because a simulator that returns real-looking ids is the worst kind of
+  failure: it reports success and changes nothing. `GET /api/config` publishes a capability report and the
+  UI turns it into a banner on every screen that needs the key. `ALLOW_DEGRADED_LLM=true` opts into the
+  offline parser deliberately.
 
 ## Run it locally
 

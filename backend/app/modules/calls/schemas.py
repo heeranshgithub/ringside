@@ -43,6 +43,7 @@ class CallDto(MongoModel):
     target_number: str | None = None
     dialed_number: str
     safe_dial: bool
+    dial_source: str = "env"
     custom_data: dict[str, str] = Field(default_factory=dict)
     status: str
     lifecycle_status: str

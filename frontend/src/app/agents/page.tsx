@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Field } from "@/components/field";
+import { CapabilityNotice } from "@/components/capability-notice";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/states";
 import { useGetAgentsQuery, useImportAgentMutation } from "@/features/agents/api";
@@ -56,6 +57,7 @@ export default function AgentsPage() {
           </>
         }
       />
+      <CapabilityNotice capability="hunar" />
       {isLoading && <TableSkeleton />}
       {error && <ErrorState error={error} onRetry={() => void refetch()} />}
       {data && data.length === 0 && (

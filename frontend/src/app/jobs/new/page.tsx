@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ChipsInput } from "@/components/chips-input";
+import { CapabilityNotice } from "@/components/capability-notice";
 import { Field } from "@/components/field";
 import { PageHeader } from "@/components/page-header";
 import { useGetConfigQuery } from "@/features/calls/api";
@@ -113,6 +114,7 @@ export default function NewJobPage() {
         title="New job"
         description="Paste the job description. The assistant extracts the essentials, drafts screening questions and builds people-search criteria."
       />
+      <CapabilityNotice capability="llm" />
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Card>
           <CardHeader>
