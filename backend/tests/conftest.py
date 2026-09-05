@@ -18,6 +18,7 @@ TEST_KEY = "test-hunar-key"
 @pytest.fixture
 def settings() -> Settings:
     return Settings(
+        _env_file=None,  # never read the developer's .env
         env="test",
         mongodb_uri="mongodb://unused",
         mongodb_db="test",

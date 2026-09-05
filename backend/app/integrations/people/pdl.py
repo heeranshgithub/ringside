@@ -50,7 +50,6 @@ class PdlProvider:
                         "should": [
                             {"match_phrase": {"job_title": t.lower()}} for t in criteria.titles
                         ],
-                        "minimum_should_match": 1,
                     }
                 }
             )
@@ -65,7 +64,6 @@ class PdlProvider:
                             {"match": {"location_locality": loc.lower()}}
                             for loc in criteria.locations
                         ],
-                        "minimum_should_match": 1,
                     }
                 }
             )
@@ -100,35 +98,48 @@ class PdlProvider:
         return [self._normalize(p) for p in resp.json().get("data", []) or []]
 
     @staticmethod
-    def _contact(*values: Any) -> str | None:
-        """On the free tier PDL returns contact fields as booleans, not values."""
+    def _text(*values: Any) -> str | None:
+        """Gated fields arrive as booleans rather than values, so take the first real string.
+
+        Verified against the sandbox: on a plan without contact or granular-location access,
+        `mobile_phone`, `work_email` and `location_name` all come back as `True`.
+        """
         for value in values:
             if isinstance(value, str) and value.strip():
                 return value.strip()
         return None
 
     @staticmethod
+    def _items(value: Any) -> list[Any]:
+        """Gated list fields arrive as booleans too, and `iter(True)` raises."""
+        return value if isinstance(value, list) else []
+
+    @staticmethod
     def _normalize(p: dict[str, Any]) -> PersonResult:
-        phone = PdlProvider._contact(
-            p.get("mobile_phone"), next(iter(p.get("phone_numbers") or []), None)
+        phone = PdlProvider._text(
+            p.get("mobile_phone"), next(iter(PdlProvider._items(p.get("phone_numbers"))), None)
         )
-        email = PdlProvider._contact(
-            p.get("work_email"), next(iter(p.get("personal_emails") or []), None)
+        email = PdlProvider._text(
+            p.get("work_email"), next(iter(PdlProvider._items(p.get("personal_emails"))), None)
         )
         exp = p.get("inferred_years_experience")
         return PersonResult(
             source="pdl",
             source_ref=str(p.get("id")),
-            name=(p.get("full_name") or "").title() or "Unknown",
-            first_name=(p.get("first_name") or None),
-            last_name=(p.get("last_name") or None),
+            name=(PdlProvider._text(p.get("full_name")) or "").title() or "Unknown",
+            first_name=PdlProvider._text(p.get("first_name")),
+            last_name=PdlProvider._text(p.get("last_name")),
             phone=phone,
             email=email,
-            current_title=(p.get("job_title") or None),
-            current_company=(p.get("job_company_name") or None),
-            location=(p.get("location_name") or None),
-            skills=list(p.get("skills") or [])[:15],
-            linkedin_url=(f"https://{p['linkedin_url']}" if p.get("linkedin_url") else None),
-            summary=p.get("summary"),
+            current_title=PdlProvider._text(p.get("job_title")),
+            current_company=PdlProvider._text(p.get("job_company_name")),
+            location=PdlProvider._text(p.get("location_name"), p.get("location_country")),
+            skills=[s for s in PdlProvider._items(p.get("skills")) if isinstance(s, str)][:15],
+            linkedin_url=(
+                f"https://{linkedin}"
+                if (linkedin := PdlProvider._text(p.get("linkedin_url")))
+                else None
+            ),
+            summary=PdlProvider._text(p.get("summary")),
             years_experience=float(exp) if isinstance(exp, int | float) else None,
         )
