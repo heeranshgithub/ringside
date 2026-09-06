@@ -11,6 +11,9 @@ dependencies = [
     "pydantic>=2.9",
     "pydantic-settings>=2.15.0",
     "boto3>=1.35",
+    # The IANA database. Linux images usually carry it and Windows never does, so ship it
+    # rather than let the calling-window check depend on the host.
+    "tzdata>=2025.1",
     "python-dotenv>=1.2.1",
     "structlog>=25.5.0",
     "uvicorn[standard]>=0.52.4",

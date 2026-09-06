@@ -11,6 +11,11 @@ export interface DialCapability {
   enabled: boolean;
   reason: string | null;
   verifyCallsLeftToday: number | null;
+  /** Hunar only dials inside a fixed daily window; outside it a call is held until morning. */
+  callingWindow: string;
+  callingTimezone: string;
+  withinCallingWindow: boolean;
+  windowOpensAt: string | null;
 }
 
 export interface StartVerificationInput {

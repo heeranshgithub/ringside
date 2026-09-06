@@ -63,6 +63,7 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
+  --color-placeholder: var(--placeholder);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
@@ -103,6 +104,9 @@
   /* --- ink --- */
   --foreground: #191818;
   --muted-foreground: #6c6f70;
+  /* A placeholder is an example, not a value. `--muted-foreground` is the colour of real
+     secondary text, so an input using it reads as already filled in. This sits a step below. */
+  --placeholder: #a2a7a8;
   --tint: #0e7f8a;
 
   --card-foreground: var(--foreground);
@@ -171,6 +175,7 @@
 
   --foreground: #eceeef;
   --muted-foreground: #8d9295;
+  --placeholder: #5a5f62;
   --tint: #35a3ad;
 
   --card-foreground: var(--foreground);

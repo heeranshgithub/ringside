@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any, Literal
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -117,6 +119,32 @@ class RetryConfig(_Upstream):
 # measured against the live API on 2026-09-06.
 EARLIEST_CALL_TIME = "08:00"
 LATEST_CALL_TIME = "21:00"
+
+
+def local_now(timezone: str) -> datetime:
+    """Now, in the timezone a call's guardrails are evaluated against."""
+    return datetime.now(ZoneInfo(timezone))
+
+
+def within_calling_window(timezone: str, *, now: datetime | None = None) -> bool:
+    """Whether Hunar would dial right now, rather than hold the call until morning.
+
+    Screening calls are happy to be held. A verification call is not: the visitor is waiting
+    to hear a code that expires in minutes, so the caller checks this before spending one.
+    """
+    local = now or local_now(timezone)
+    return EARLIEST_CALL_TIME <= local.strftime("%H:%M") <= LATEST_CALL_TIME
+
+
+def next_window_opens(timezone: str, *, now: datetime | None = None) -> datetime:
+    """The next moment Hunar would place a call. Today's opening, or tomorrow's if it passed."""
+    local = now or local_now(timezone)
+    hour, minute = (int(part) for part in EARLIEST_CALL_TIME.split(":"))
+    if local.strftime("%H:%M") < EARLIEST_CALL_TIME:
+        return local.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    # Rebuilt from tomorrow's local date rather than by adding 24h, so a DST shift in some
+    # other timezone still lands on 08:00 local.
+    return (local + timedelta(days=1)).replace(hour=hour, minute=minute, second=0, microsecond=0)
 
 
 class Guardrails(_Upstream):

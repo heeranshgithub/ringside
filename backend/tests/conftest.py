@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -34,6 +36,24 @@ def settings() -> Settings:
         poller_enabled=False,
         openrouter_api_key="",
     )
+
+
+@pytest.fixture(autouse=True)
+def inside_the_calling_window() -> Iterator[None]:
+    """Pin the clock inside Hunar's 08:00-21:00 window for every test.
+
+    Verification refuses to place a call that could not ring yet, so without this the suite
+    would pass during the working day and fail in the evening.
+    """
+    from app.integrations.hunar import schemas as hunar_schemas
+
+    frozen = datetime(2026, 9, 6, 10, 0, tzinfo=ZoneInfo("Asia/Kolkata"))
+    original = hunar_schemas.local_now
+    hunar_schemas.local_now = lambda _tz: frozen  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        hunar_schemas.local_now = original  # type: ignore[assignment]
 
 
 @pytest.fixture

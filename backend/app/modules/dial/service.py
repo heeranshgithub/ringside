@@ -31,6 +31,8 @@ from app.integrations.hunar.schemas import (
     Guardrails,
     HunarAgentCreate,
     HunarCallCreate,
+    next_window_opens,
+    within_calling_window,
 )
 
 log = structlog.get_logger()
@@ -52,6 +54,18 @@ class RateLimited(AppError):
 class VerificationFailed(AppError):
     status_code = 400
     code = "verification_failed"
+
+
+class OutsideCallingWindow(AppError):
+    """Hunar would accept the call and hold it until morning, which is useless here.
+
+    A screening call is happy to wait. A verification call is not: someone is sitting in
+    front of the form waiting to type a code that expires in minutes, so a call placed now
+    would arrive long after the code did, having spent one of the day's slots for nothing.
+    """
+
+    status_code = 409
+    code = "outside_calling_window"
 
 
 def _require_enabled(settings: Settings) -> None:
@@ -166,6 +180,15 @@ async def start_verification(
     if not phone:
         raise ValidationFailed("Enter a phone number.")
     assert_dialable(phone)
+
+    # Checked before the limits, so a request that could never ring costs nothing.
+    if not within_calling_window(settings.hunar_timezone):
+        opens = next_window_opens(settings.hunar_timezone)
+        raise OutsideCallingWindow(
+            f"Hunar only places calls between {EARLIEST_CALL_TIME} and {LATEST_CALL_TIME} "
+            f"({settings.hunar_timezone}). The next one can ring at "
+            f"{opens.strftime('%H:%M on %d %b')}."
+        )
 
     await _assert_within_limits(db, settings, phone, session_id)
 

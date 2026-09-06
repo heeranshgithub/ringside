@@ -24,6 +24,12 @@ class DialCapabilityDto(ApiModel):
     enabled: bool
     reason: str | None = None
     verify_calls_left_today: int | None = None
+    # The platform only dials inside a fixed daily window. The form needs to say so before
+    # someone presses a button that would silently do nothing until morning.
+    calling_window: str
+    calling_timezone: str
+    within_calling_window: bool
+    window_opens_at: datetime | None = None
 
 
 class StartVerificationRequest(StrictApiModel):

@@ -2,8 +2,15 @@ from __future__ import annotations
 
 from fastapi import APIRouter, status
 
+from app.core.config import Settings
 from app.core.deps import DbDep, HunarDep, SessionId, SettingsDep
 from app.core.errors import ValidationFailed
+from app.integrations.hunar.schemas import (
+    EARLIEST_CALL_TIME,
+    LATEST_CALL_TIME,
+    next_window_opens,
+    within_calling_window,
+)
 from app.modules.dial import service
 from app.modules.dial.schemas import (
     ConfirmVerificationRequest,
@@ -27,17 +34,32 @@ def _session(session_id: str | None) -> str:
     return session_id
 
 
+def _window(settings: Settings) -> dict[str, object]:
+    """The calling window as the browser needs it: what it is, and when it next opens."""
+    inside = within_calling_window(settings.hunar_timezone)
+    return {
+        "calling_window": f"{EARLIEST_CALL_TIME}-{LATEST_CALL_TIME}",
+        "calling_timezone": settings.hunar_timezone,
+        "within_calling_window": inside,
+        "window_opens_at": None if inside else next_window_opens(settings.hunar_timezone),
+    }
+
+
 @router.get("", response_model=DialCapabilityDto)
 async def capability(
     db: DbDep, settings: SettingsDep, x_session_id: SessionId = None
 ) -> DialCapabilityDto:
     if not settings.allow_client_dial_target:
-        return DialCapabilityDto(enabled=False, reason=None)
+        return DialCapabilityDto(enabled=False, reason=None, **_window(settings))
     if not settings.client_dial_enabled:
-        return DialCapabilityDto(enabled=False, reason=settings.client_dial_blocked_reason)
+        return DialCapabilityDto(
+            enabled=False, reason=settings.client_dial_blocked_reason, **_window(settings)
+        )
 
     left = await service.calls_left_today(db, settings, x_session_id)
-    return DialCapabilityDto(enabled=True, reason=None, verify_calls_left_today=left)
+    return DialCapabilityDto(
+        enabled=True, reason=None, verify_calls_left_today=left, **_window(settings)
+    )
 
 
 @router.get("/current", response_model=DialTargetDto | None)

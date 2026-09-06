@@ -15,6 +15,7 @@ import {
   useReleaseDialTargetMutation,
   useStartVerificationMutation,
 } from "@/features/dial/api";
+import { formatClockDay } from "@/lib/format";
 import { getErrorMessage } from "@/lib/errors";
 import { normalizePhone, prettyPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
@@ -42,7 +43,11 @@ export function DialTargetCard({ className }: { className?: string }) {
 
   const normalized = normalizePhone(phone);
   const phoneError = phone.trim() && !normalized.ok ? normalized.error : undefined;
-  const canStart = normalized.ok && consent && !startState.isLoading;
+  // Hunar holds a call placed outside its window until morning. A verification code expires
+  // in ten minutes, so a held call is not a slow success — it is a silent failure. The form
+  // says so instead of letting someone press a button that cannot ring.
+  const shut = capability.withinCallingWindow === false;
+  const canStart = normalized.ok && consent && !startState.isLoading && !shut;
 
   if (target?.verified) {
     return (
@@ -129,10 +134,20 @@ export function DialTargetCard({ className }: { className?: string }) {
         <p className="text-[14px] font-medium">Try it on your own phone</p>
         <p className="text-muted-foreground mt-0.5 text-[13px]">
           We will call you once with a code. After that, every screening call from this browser
-          rings your number instead of the server&apos;s, so you can hear the agent yourself.
-          Candidates are never dialled.
+          rings your number, so you can hear the agent yourself. Candidates are never dialled.
         </p>
       </div>
+
+      {shut ? (
+        // Neutral, not amber: amber is reserved for a call that is ringing (DESIGN.md rule 4).
+        // This is a closed sign, not an alarm.
+        <p className="border-hairline text-muted-foreground bg-muted/40 rounded-lg border px-3 py-2 text-xs">
+          Hunar only places calls between {capability.callingWindow.replace("-", " and ")}{" "}
+          {capability.callingTimezone === "Asia/Kolkata" ? "IST" : capability.callingTimezone}. The
+          next call can ring at{" "}
+          <span className="font-medium">{formatClockDay(capability.windowOpensAt)}</span>.
+        </p>
+      ) : null}
 
       <form
         className="space-y-3"
@@ -155,14 +170,16 @@ export function DialTargetCard({ className }: { className?: string }) {
           hint={
             normalized.ok
               ? `We will call ${prettyPhone(normalized.value)}`
-              : "Indian mobile, with or without +91. Up to 3 calls per number per day."
+              : shut
+                ? "Indian mobile, with or without +91. Up to 3 calls per number per day."
+                : `Indian mobile, with or without +91. Rings between ${capability.callingWindow.replace("-", " and ")} IST; up to 3 calls per number per day.`
           }
         >
           <Input
             id="dial-phone"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="98765 43210"
+            placeholder="Enter a 10-digit mobile number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
           />

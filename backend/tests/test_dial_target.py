@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager, contextmanager
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -151,6 +153,20 @@ def test_client_dialling_will_not_enable_without_an_access_code() -> None:
 # ---------- the verification round trip ----------
 
 
+@contextmanager
+def freeze_local_time(stamp: str) -> Iterator[None]:
+    """Pin `local_now` so the window check is testable at any hour of the real clock."""
+    from app.integrations.hunar import schemas as hunar_schemas
+
+    frozen = datetime.strptime(stamp, "%Y-%m-%d %H:%M").replace(tzinfo=ZoneInfo("Asia/Kolkata"))
+    original = hunar_schemas.local_now
+    hunar_schemas.local_now = lambda _tz: frozen  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        hunar_schemas.local_now = original  # type: ignore[assignment]
+
+
 @asynccontextmanager
 async def _client(hunar: FakeHunarClient, **kw: object) -> AsyncIterator[AsyncClient]:
     """A live app: the lifespan is what builds the container the routes depend on."""
@@ -290,6 +306,39 @@ async def test_a_call_hunar_refuses_does_not_spend_a_slot() -> None:
         assert failed.status_code >= 400
         # The allowance is untouched, so the visitor can simply try again.
         assert (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"] == 2
+
+
+async def test_a_call_that_could_not_ring_yet_is_refused_before_it_costs_anything() -> None:
+    """Outside the window Hunar would accept the call and hold it until morning.
+
+    The visitor is waiting to type a code that expires in ten minutes, so a held call is
+    worse than a refusal: no code arrives, nothing explains why, and a daily slot is gone.
+    """
+    hunar = FakeHunarClient()
+    async with _client(hunar, hunar_timezone="Asia/Kolkata") as app_client:
+        before = (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"]
+
+        with freeze_local_time("2026-09-06 22:07"):
+            resp = await app_client.post(
+                "/api/dial-target/start", json={"phone": "9876543210", "consent": True}
+            )
+
+        assert resp.status_code == 409
+        assert resp.json()["error"]["code"] == "outside_calling_window"
+        assert "08:00" in resp.json()["error"]["message"]
+        assert hunar.calls == {}, "nothing was dialled"
+        assert (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"] == before
+
+
+async def test_the_window_is_reported_so_the_form_can_say_so() -> None:
+    hunar = FakeHunarClient()
+    async with _client(hunar) as app_client:
+        body = (await app_client.get("/api/dial-target")).json()
+        assert body["callingWindow"] == "08:00-21:00"
+        assert body["callingTimezone"] == "Asia/Kolkata"
+        assert isinstance(body["withinCallingWindow"], bool)
+        # Only meaningful while shut, and always present while it is.
+        assert (body["windowOpensAt"] is None) is body["withinCallingWindow"]
 
 
 async def test_the_flow_is_closed_when_the_flag_is_off() -> None:
