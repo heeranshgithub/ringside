@@ -22,7 +22,7 @@ const STARTER = {
   agentPrompt:
     "You are {persona_name}, a polite and efficient recruiting assistant for {company}. You are calling {candidate_name} about the {job_role} role based in {location}. Ask one question at a time, confirm key facts by repeating them, keep the call under four minutes and speak simply. If the candidate is busy or not interested, thank them and end the call politely.\n\nQuestions to cover:\n- Are you open to new opportunities right now?\n- How many years of relevant experience do you have?\n- Which city are you based in, and are you open to relocating to {location}?\n- What is your current and expected salary?\n- What is your notice period or earliest joining date?",
   resultPrompt:
-    'From the conversation, extract a JSON object matching the schema. Use "unknown" when a fact was not discussed. recommendation must be hire_now, maybe, reject or unknown.',
+    'From the conversation, extract a JSON object matching the schema. Use "unknown" when a fact was not discussed.',
   resultSchema: {
     summary: "string",
     interested: "boolean",
@@ -32,7 +32,6 @@ const STARTER = {
     current_ctc: "string",
     expected_ctc: "string",
     notice_period_days: "string",
-    recommendation: "string",
   },
 };
 

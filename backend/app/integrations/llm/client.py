@@ -177,7 +177,6 @@ def _sanitize_draft(draft: AgentDraft) -> AgentDraft:
         draft.result_schema = {
             "summary": "string",
             "interested": "boolean",
-            "recommendation": "string",
         }
     draft.name = draft.name[:64]
     return draft

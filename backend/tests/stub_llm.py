@@ -73,7 +73,6 @@ class StubLlm:
             result_schema={
                 "summary": "string",
                 "interested": "boolean",
-                "recommendation": "string",
             },
         )
 

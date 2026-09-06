@@ -37,9 +37,10 @@ Rules:
   Say to use "unknown" when a fact was not discussed.
 - result_schema: a FLAT JSON object whose keys are snake_case field names and whose values are the
   type name as a string: "string", "boolean", or "number". Always include: summary (string),
-  interested (boolean), recommendation (string: hire_now, maybe, reject, unknown). Add 5-9 more
-  fields that capture the answers to the screening questions (e.g. years_experience, current_ctc,
-  expected_ctc, notice_period_days, current_location, open_to_relocation, relevant_skills).
+  interested (boolean). Add 5-9 more fields that capture the answers to the screening questions
+  (e.g. years_experience, current_ctc, expected_ctc, notice_period_days, current_location,
+  open_to_relocation, relevant_skills). Never add a hiring recommendation or verdict field: the
+  agent only collects facts on the call, and the platform scores them afterwards.
 Output only JSON."""
 
 ASSESS_CALL_SYSTEM = """You are a hiring manager reviewing the structured output of an AI phone

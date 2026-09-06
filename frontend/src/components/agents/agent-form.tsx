@@ -93,7 +93,6 @@ export function AgentForm({
         initial?.resultSchema ?? {
           summary: "string",
           interested: "boolean",
-          recommendation: "string",
         },
         null,
         2,

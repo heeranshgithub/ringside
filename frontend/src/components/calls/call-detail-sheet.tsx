@@ -73,7 +73,11 @@ export function CallDetailBody({ call }: { call: Call }) {
     }
   };
 
-  const resultEntries = Object.entries(call.result ?? {});
+  // Agents drafted before 2026-09-07 asked Hunar's extractor for a "recommendation" as well. A
+  // screener only collects facts, so that field came back "unknown" on every call and sat one
+  // section away from a real verdict. The verdict is the assessment's; hide the stub so the
+  // two can never appear to disagree. Agents drafted now no longer ask for it.
+  const resultEntries = Object.entries(call.result ?? {}).filter(([k]) => k !== "recommendation");
   const terminal = ["COMPLETED", "FAILED", "CANCELLED"].includes(call.lifecycleStatus);
 
   return (
