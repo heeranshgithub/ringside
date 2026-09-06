@@ -34,7 +34,8 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
               <KeyRound className="size-4" /> Access code required
             </CardTitle>
             <CardDescription>
-              This deployment can place real phone calls, so it is gated behind a shared code.
+              This deployment can place real phone calls, so it is gated behind a shared code. You
+              will find it in the same email as this link.
             </CardDescription>
           </CardHeader>
           <CardContent>
