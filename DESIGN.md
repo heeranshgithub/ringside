@@ -9,9 +9,9 @@ Ringside's visual system, recorded from the built product. Direction: **Halo**.
 The direction began from a screenshot of a desktop app sitting on a wallpaper. The wallpaper was the
 operating system, not the design; rebuilding it as a page background produced a window inside a window
 and wasted a band of screen on every side. The ambient teal survives, but it lives in real surfaces:
-a soft wash down the navigation rail, the icon tiles, focus rings, selection. Glass appears only where
-something genuinely sits over content, which on the web means the mobile drawer, popovers and dialogs.
-**Nothing is ever blurred behind the data**, because blur behind small text is where glassmorphism dies,
+a soft wash down the navigation rail, the icon tiles, focus rings, selection. Glass survives in exactly one
+place, the mobile header bar, which overlaps scrolling content and carries no reading text. Menus, dialogs
+and drawers are opaque. **Nothing is ever blurred behind the data**, because blur behind small text is where glassmorphism dies,
 and this product is a table of call results a recruiter reads all day.
 
 ## Color
@@ -55,8 +55,9 @@ call would lose its urgency against its own background.
 One family. **Onest** for everything, **Geist Mono** for time, duration, phone numbers and identifiers.
 Monospace is used for measurement, never as a costume for "technical".
 
-Product-UI scale: fixed rem steps, not fluid. Body sits at 13px with a tight ratio, because there are
-more type elements here than on a brand surface and exaggerated contrast becomes noise.
+Fixed steps, not fluid. The workhorse is Tailwind's `text-sm` at 14px, with 13px for denser secondary rows
+and captions. The ratio stays tight on purpose: there are more type elements here than on a brand surface,
+so exaggerated contrast becomes noise.
 
 ## Surfaces and depth
 
@@ -113,8 +114,10 @@ Client pages cannot export metadata, so each route segment holds a small `layout
 ## Components
 
 shadcn/ui over Base UI primitives, **restyled through tokens, never replaced**. Every shadcn token
-(`--primary`, `--muted-foreground`, `--border`, `--sidebar`, …) is redefined in `globals.css`; the
-component files in `src/components/ui` are stock. Halo adds its own token layer on top: `--sheet`,
+(`--primary`, `--muted-foreground`, `--border`, `--sidebar`, …) is redefined in `globals.css`, and the
+component files in `src/components/ui` stay stock apart from two documented edits: `select.tsx` and
+`dropdown-menu.tsx` have upstream's `cursor-default` stripped from their items, for the reason in rule 9.
+Each carries a comment saying so, because `shadcn add` would silently put it back. Halo adds its own token layer on top: `--sheet`,
 `--rail`, `--hairline`, `--tint`, and the `live` / `done` / `fail` triplets, each exposed to Tailwind
 through `@theme inline`.
 
@@ -130,8 +133,9 @@ Tables use tabular numerals so figures align down a column.
 3. Never put `backdrop-filter` or alpha behind a table, a form, a menu, or any block of reading text.
    Overlays earn their separation from shadow and an opaque fill, never from transparency.
 4. Amber means a live call. Do not reuse it for warnings, highlights, or emphasis.
-5. The primary action stays near-black. Hunar's blue (`#006EDD`) is reserved for surfaces that carry
-   their name; it is a credit, not co-branding.
+5. The primary action stays near-black. Hunar's blue (`#006EDD`) appears nowhere in the product today and
+   should stay that way: if a surface ever credits Hunar by name it may carry the blue, but a credit is not
+   co-branding.
 6. Cards do not nest. If a card needs cards inside it, the outer card should not exist.
 7. State is a lamp plus a word. A colour on its own is not a state.
 8. The app scrolls inside `<main>`, not the document. Any anchored overlay must be verified by
@@ -140,5 +144,5 @@ Tables use tabular numerals so figures align down a column.
    so `globals.css` restores it as one role-based rule. Match on role, not tag: Base UI renders a
    select item as `div[role=option]` and a checkbox as `span[role=checkbox]`, so a `button` selector
    fixes the toolbar and misses the menus. shadcn ships menu and select items with `cursor-default`
-   from Radix, which outranks a base rule, so it is stripped and `npm run check:cursors` guards it.
+   from Radix, which outranks a base rule, so it is stripped and `pnpm check:cursors` guards it.
    Labels are exempt: a label on a text field only moves focus.

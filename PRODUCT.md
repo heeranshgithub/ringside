@@ -31,9 +31,11 @@ people-search criteria in one step, and every call comes back as ranked, evidenc
   candidates → start calls → calls tab (live status, recording, answers, assessment, timeline).
 - Calls run asynchronously; status arrives by webhook and a 30 s poller. Retries and calling windows are
   Hunar concepts the recruiter sets at launch.
-- Safe-dial: every call routes to a configured test number unless real dialling is enabled and the candidate is
-  cleared. The UI must make the dial target unmistakable.
-- Providers: Apollo.io, People Data Labs, and a seeded demo dataset. Provider availability depends on keys.
+- Safe-dial: a call reaches the candidate's own number only when real dialling is on and that candidate is
+  cleared; otherwise it reaches a number the visitor verified by answering a call, and if there is none the
+  candidate is skipped. There is no operator-configured fallback number. The UI must make the dial target
+  unmistakable.
+- Providers: People Data Labs, Coresignal, Apollo.io, and a seeded demo dataset. Availability depends on keys.
 
 ## Capabilities and Constraints
 
@@ -47,7 +49,8 @@ people-search criteria in one step, and every call comes back as ranked, evidenc
 
 ## Brand Commitments
 
-- Name: Ringside. Mark: a single "R" tile today; no logo asset yet.
+- Name: Ringside. Mark: a voice waveform bent into a ring, twelve radial ticks; see `src/components/logo.tsx`
+  and the mark section of DESIGN.md.
 - Anti-goals confirmed by the owner: not a generic SaaS dashboard; not playful or gimmicky (no mascots, heavy
   gradients, animation for its own sake); not corporate-cold enterprise grey; not dark-only "AI startup" neon.
 - Built on Hunar.AI voice agents; credited, not co-branded.
