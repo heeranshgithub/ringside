@@ -31,7 +31,6 @@ export interface AgentDraft {
   agentPrompt: string;
   resultPrompt: string;
   resultSchema: ResultSchema;
-  llmUsed: boolean;
 }
 
 export interface CreateAgentInput {

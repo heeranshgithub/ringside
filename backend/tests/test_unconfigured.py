@@ -43,9 +43,13 @@ class TestNoSimulatorByAccident:
     def test_no_degraded_llm_implementation_ships_in_the_app(self) -> None:
         """There is no keyword-matching fallback to fall into, by flag or otherwise."""
         import app.integrations.llm.client as llm_module
+        from app.modules.jobs.schemas import ParsedJobDto
 
         assert not hasattr(llm_module, "RuleBasedLlm")
         assert not hasattr(Settings(_env_file=None), "allow_degraded_llm")
+        # Nothing on the wire asks "was this really the model?" either: a field that is
+        # always true is an invitation to write the branch that handles false.
+        assert "llm_used" not in ParsedJobDto.model_fields
 
 
 class TestRefusals:

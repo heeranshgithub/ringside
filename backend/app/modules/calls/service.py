@@ -450,7 +450,7 @@ async def assess_call(db: Db, llm: LlmService, call_id: str) -> CallDto:
         {"_id": call_id},
         {
             "$set": {
-                "assessment": {**assessment.model_dump(), "llm_used": llm.enabled},
+                "assessment": assessment.model_dump(),
                 "updated_at": utcnow(),
             }
         },

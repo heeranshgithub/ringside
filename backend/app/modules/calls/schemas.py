@@ -31,7 +31,6 @@ class AssessmentDto(ApiModel):
     strengths: list[str] = Field(default_factory=list)
     concerns: list[str] = Field(default_factory=list)
     next_step: str = ""
-    llm_used: bool = False
 
 
 class CallDto(MongoModel):

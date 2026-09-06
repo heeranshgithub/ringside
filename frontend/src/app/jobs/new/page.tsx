@@ -73,7 +73,7 @@ export default function NewJobPage() {
         questionsText: p.screeningQuestions.join("\n"),
         criteria: p.searchCriteria,
       });
-      toast.success(p.llmUsed ? "Analysed with the LLM" : "Analysed with the rule-based parser");
+      toast.success("Job description analysed");
     } catch (e) {
       toast.error(getErrorMessage(e as never));
     }
@@ -122,7 +122,7 @@ export default function NewJobPage() {
             <CardDescription>
               {config?.llmEnabled
                 ? `Analysed with ${config.llmModel} via OpenRouter.`
-                : "No LLM key configured: a rule-based parser will be used."}
+                : "No LLM key configured, so analysis is unavailable."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

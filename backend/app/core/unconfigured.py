@@ -79,9 +79,9 @@ class UnconfiguredHunarClient:
 class UnconfiguredLlm:
     """Stands in for the language model when OPENROUTER_API_KEY is absent.
 
-    Set ALLOW_DEGRADED_LLM=true to opt into the rule-based parser instead. That is a
-    deliberate choice for offline work, not something you should get by accident: its
-    output looks like model output and is not.
+    There is no second-best parser to fall into and no flag that would enable one. A
+    rule-based stand-in produces output that looks like model output and is not, which
+    is exactly the failure this module exists to prevent.
     """
 
     enabled = False
@@ -92,7 +92,7 @@ class UnconfiguredLlm:
         _refuse(
             "The language model",
             "OPENROUTER_API_KEY",
-            "Set ALLOW_DEGRADED_LLM=true to fall back to the offline rule-based parser instead.",
+            "Parsing, drafting and scoring are refused rather than approximated.",
         )
 
     async def parse_job(self, *_: Any, **__: Any) -> NoReturn:

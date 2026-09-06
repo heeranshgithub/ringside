@@ -17,7 +17,7 @@ from app.modules.jobs.schemas import (
 
 async def parse_description(llm: LlmService, description: str) -> ParsedJobDto:
     parsed = await llm.parse_job(description)
-    return ParsedJobDto.model_validate({**parsed.model_dump(), "llm_used": llm.enabled})
+    return ParsedJobDto.model_validate(parsed.model_dump())
 
 
 async def _with_counts(db: Db, raw: Mapping[str, Any]) -> JobDto:

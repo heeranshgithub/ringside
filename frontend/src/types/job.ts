@@ -42,7 +42,6 @@ export interface ParsedJob {
   niceToHaves: string[];
   screeningQuestions: string[];
   searchCriteria: SearchCriteria;
-  llmUsed: boolean;
 }
 
 export interface ParseJobInput {

@@ -23,8 +23,9 @@ async def test_parse_job_returns_criteria(client: AsyncClient) -> None:
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["llmUsed"] is True
     assert body["title"] == "Senior Frontend Engineer (Next.js)"
+    assert body["company"] == "Northline Labs"
+    assert body["location"] == "Bengaluru"
     assert body["searchCriteria"]["skills"] == ["react", "typescript"]
     assert body["searchCriteria"]["locations"] == ["Bengaluru"]
 
@@ -231,14 +232,3 @@ async def test_access_code_gate(hunar: FakeHunarClient) -> None:
             await c.get("/api/jobs", headers={"X-Access-Code": "open-sesame"})
         ).status_code == 200
         assert (await c.get("/health")).status_code == 200
-
-
-async def test_rule_based_parser_splits_title_from_company(client: AsyncClient) -> None:
-    jd = (
-        "Senior Frontend Engineer (Next.js) — Northline Labs, Bengaluru\n"
-        "We need React and TypeScript for our hiring dashboard."
-    )
-    body = (await client.post("/api/jobs/parse", json={"description": jd})).json()
-    assert body["title"] == "Senior Frontend Engineer (Next.js)"
-    assert body["company"] == "Northline Labs"
-    assert body["location"] == "Bengaluru"
