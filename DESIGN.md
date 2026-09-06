@@ -136,3 +136,9 @@ Tables use tabular numerals so figures align down a column.
 7. State is a lamp plus a word. A colour on its own is not a state.
 8. The app scrolls inside `<main>`, not the document. Any anchored overlay must be verified by
    scrolling with it open; a popup that positions once will silently detach.
+9. Anything clickable shows a hand. Tailwind v4 dropped Preflight's `cursor: pointer` on buttons,
+   so `globals.css` restores it as one role-based rule. Match on role, not tag: Base UI renders a
+   select item as `div[role=option]` and a checkbox as `span[role=checkbox]`, so a `button` selector
+   fixes the toolbar and misses the menus. shadcn ships menu and select items with `cursor-default`
+   from Radix, which outranks a base rule, so it is stripped and `npm run check:cursors` guards it.
+   Labels are exempt: a label on a text field only moves focus.

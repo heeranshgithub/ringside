@@ -233,6 +233,45 @@
     outline-offset: 2px;
   }
 
+  /*
+    Tailwind v4 removed the Preflight rule that gave buttons `cursor: pointer`, so every
+    control in the app fell back to the arrow. Restored here rather than component by
+    component for two reasons.
+
+    Base UI renders half of these controls as something other than a button: a select item
+    is a div[role=option], a menu item is a div[role=menuitem], a checkbox is a
+    span[role=checkbox], a switch is a span[role=switch]. A rule targeting `button` alone
+    would fix the toolbar and still miss the menus. Matching on role catches them by what
+    they are rather than by what tag they happen to render.
+
+    It is also the only version that survives contact with the future: a component added by
+    `shadcn add` next month inherits this instead of regressing and being noticed by a user.
+
+    Disabled is spelled three ways across these primitives, so all three are excluded.
+    `:disabled` on native buttons, `[data-disabled]` on Base UI parts, `[aria-disabled]` on
+    the ones that stay focusable while disabled. Components that additionally want
+    `cursor-not-allowed` still win, because utilities outrank base.
+
+    Labels are deliberately not in this list. A label on a text field is not a button, and a
+    pointer there advertises a click target that only moves focus. A label that genuinely
+    wraps a checkbox opts in locally.
+  */
+  :is(
+    button,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [role="option"],
+    [role="radio"],
+    [role="menuitem"],
+    [role="menuitemcheckbox"],
+    [role="menuitemradio"],
+    [role="checkbox"],
+    [role="switch"]
+  ):not(:disabled, [disabled], [aria-disabled="true"], [data-disabled]) {
+    cursor: pointer;
+  }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: color-mix(in oklab, var(--foreground) 22%, transparent) transparent;
