@@ -19,7 +19,13 @@ export function Field({
   className?: string;
 }) {
   return (
-    <div className={cn("space-y-1.5", className)}>
+    // `flex flex-col gap-1.5`, not `space-y-1.5`: Base UI renders a `position: fixed` input as
+    // the last child of a Select for form integration, and `space-y` targets it as a sibling
+    // (`:not([hidden]) ~ :not([hidden])`), adding its margin to this box even though the element
+    // is out of flow. The wrapper then sits 6px below its own control, and any row that aligns
+    // on it — `items-end` toolbars — pushes plain buttons out of line. Flex gap only applies
+    // between real flex items, so the box hugs the visible control.
+    <div className={cn("flex flex-col gap-1.5", className)}>
       <Label htmlFor={htmlFor}>{label}</Label>
       {children}
       {error ? (

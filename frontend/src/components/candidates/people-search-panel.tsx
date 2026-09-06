@@ -127,8 +127,11 @@ export function PeopleSearchPanel({
           />
         </Field>
       </div>
+      {/* The provider note lives under the row, not inside the Provider field: as a hint it made
+          that one item taller, and `items-end` then aligned the other control and the button to
+          the bottom of the note rather than to the bottom of the selects. */}
       <div className="flex flex-wrap items-end gap-3">
-        <Field label="Provider" htmlFor="ps-provider" hint={providerInfo?.note}>
+        <Field label="Provider" htmlFor="ps-provider">
           <Select value={provider} onValueChange={(v) => setProvider(v ?? "mock")}>
             <SelectTrigger id="ps-provider" className="w-56">
               <SelectValue />
@@ -159,11 +162,14 @@ export function PeopleSearchPanel({
             </SelectContent>
           </Select>
         </Field>
-        <Button onClick={runSearch} disabled={searchState.isLoading} className="mb-[1px]">
+        <Button onClick={runSearch} disabled={searchState.isLoading}>
           <Search data-icon="inline-start" />
           {searchState.isLoading ? "Searching…" : "Search people"}
         </Button>
       </div>
+      {providerInfo?.note ? (
+        <p className="text-muted-foreground -mt-1 text-xs">{providerInfo.note}</p>
+      ) : null}
 
       {results.length === 0 ? (
         <EmptyState
