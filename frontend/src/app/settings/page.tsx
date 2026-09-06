@@ -11,7 +11,7 @@ import { DialTargetCard } from "@/components/dial/dial-target-card";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState, PageSkeleton } from "@/components/states";
 import { useGetConfigQuery } from "@/features/calls/api";
-import { getAccessCode, setAccessCode } from "@/lib/access-code";
+import { setAccessCode, useAccessCode } from "@/lib/access-code";
 
 function Row({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
   return (
@@ -32,7 +32,8 @@ function Row({ label, value, ok }: { label: string; value: React.ReactNode; ok?:
 
 export default function SettingsPage() {
   const { data, error, isLoading, refetch } = useGetConfigQuery();
-  const [code, setCode] = useState(getAccessCode() ?? "");
+  const stored = useAccessCode();
+  const [code, setCode] = useState(stored ?? "");
   if (isLoading) return <PageSkeleton />;
   if (error || !data) return <ErrorState error={error} onRetry={() => void refetch()} />;
   return (
