@@ -328,8 +328,7 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
             <CardTitle>This job has no voice agent yet</CardTitle>
             <CardDescription>
               Generate one from the screening questions
-              {config?.llmEnabled ? ` using ${config.llmModel}` : " using templates"}, or attach an
-              agent you already created.
+              {!config?.llmEnabled && " using templates"}, or attach an agent you already created.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
