@@ -13,19 +13,47 @@ import { ErrorState, PageSkeleton } from "@/components/states";
 import { useGetConfigQuery } from "@/features/calls/api";
 import { setAccessCode, useAccessCode } from "@/lib/access-code";
 
-function Row({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
+/**
+ * The lamp, the word and the ink for one state, in one place. Keeping them together is what
+ * stops a lamp from turning green while the word beside it still says "not configured": the
+ * two used to be decided by separate ternaries at the call site.
+ *
+ * `off` is not a failure. It is a switch the operator turned off on purpose, so it gets the
+ * muted lamp rather than the red one.
+ */
+const STATE = {
+  ok: { lamp: "bg-done", ink: "text-done", word: "configured" },
+  degraded: { lamp: "bg-live", ink: "text-live-ink", word: "degraded" },
+  missing: { lamp: "bg-fail", ink: "text-fail", word: "not configured" },
+  off: { lamp: "bg-muted-foreground/40", ink: "text-muted-foreground", word: "off" },
+} as const;
+
+type RowState = keyof typeof STATE;
+
+/**
+ * One line of the readout: label on the left, value on the right, status lamp beside the
+ * label.
+ *
+ * The lamp used to sit next to the value, and it never lined up. The value column is
+ * right-aligned and sized to its own content, so a lamp anchored to its left edge lands at a
+ * different x on every row, and on a two-line value it floated between the lines instead of
+ * beside the word it describes. Anchoring the lamp to the label instead gives it the one
+ * fixed edge on the row, which is what makes a column of lamps read as a column.
+ *
+ * The lamp element is always rendered, transparent when the row has no state, so a stateless
+ * row's label does not slide left and break the same alignment from the other direction.
+ */
+function Row({ label, value, state }: { label: string; value: React.ReactNode; state?: RowState }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b py-2 text-sm last:border-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="flex items-center gap-2 text-right">
-        {ok !== undefined && (
-          <span
-            className={`size-2 rounded-full ${ok ? "bg-emerald-500" : "bg-muted-foreground/40"}`}
-            aria-hidden
-          />
-        )}
-        {value}
+    <div className="flex items-start justify-between gap-4 border-b py-2 text-sm last:border-0">
+      <span className="text-muted-foreground flex items-center gap-2">
+        <span
+          className={`size-2 shrink-0 rounded-full ${state ? STATE[state].lamp : "bg-transparent"}`}
+          aria-hidden
+        />
+        {label}
       </span>
+      <span className="text-right">{value}</span>
     </div>
   );
 }
@@ -56,7 +84,7 @@ export default function SettingsPage() {
                   ? "On (every call goes to a number you verified below)"
                   : "Off (cleared candidates are dialled for real)"
               }
-              ok={data.safeDialMode}
+              state={data.safeDialMode ? "ok" : "off"}
             />
             <Row label="Environment" value={data.env} />
             <DialTargetCard className="mt-3" />
@@ -77,24 +105,10 @@ export default function SettingsPage() {
               <Row
                 key={cap.key}
                 label={cap.label}
-                ok={cap.state === "ok"}
+                state={cap.state}
                 value={
                   <span className="flex flex-col items-end">
-                    <span
-                      className={
-                        cap.state === "ok"
-                          ? "text-done"
-                          : cap.state === "degraded"
-                            ? "text-live-ink"
-                            : "text-fail"
-                      }
-                    >
-                      {cap.state === "ok"
-                        ? "configured"
-                        : cap.state === "degraded"
-                          ? "degraded"
-                          : "not configured"}
-                    </span>
+                    <span className={STATE[cap.state].ink}>{STATE[cap.state].word}</span>
                     <span className="text-muted-foreground max-w-80 text-right text-[11.5px]">
                       {cap.detail}
                       {cap.envVar ? ` Set ${cap.envVar}.` : ""}

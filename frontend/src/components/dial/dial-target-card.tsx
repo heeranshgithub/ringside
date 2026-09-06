@@ -46,7 +46,13 @@ export function DialTargetCard({ className }: { className?: string }) {
   // Hunar holds a call placed outside its window until morning. A verification code expires
   // in ten minutes, so a held call is not a slow success — it is a silent failure. The form
   // says so instead of letting someone press a button that cannot ring.
+  // An older backend does not send these yet; treat "unknown" as open rather than crash.
   const shut = capability.withinCallingWindow === false;
+  const windowLabel = (capability.callingWindow ?? "08:00-21:00").replace("-", " and ");
+  const windowZone =
+    !capability.callingTimezone || capability.callingTimezone === "Asia/Kolkata"
+      ? "IST"
+      : capability.callingTimezone;
   const canStart = normalized.ok && consent && !startState.isLoading && !shut;
 
   if (target?.verified) {
@@ -142,9 +148,7 @@ export function DialTargetCard({ className }: { className?: string }) {
         // Neutral, not amber: amber is reserved for a call that is ringing (DESIGN.md rule 4).
         // This is a closed sign, not an alarm.
         <p className="border-hairline text-muted-foreground bg-muted/40 rounded-lg border px-3 py-2 text-xs">
-          Hunar only places calls between {capability.callingWindow.replace("-", " and ")}{" "}
-          {capability.callingTimezone === "Asia/Kolkata" ? "IST" : capability.callingTimezone}. The
-          next call can ring at{" "}
+          Hunar only places calls between {windowLabel} {windowZone}. The next call can ring at{" "}
           <span className="font-medium">{formatClockDay(capability.windowOpensAt)}</span>.
         </p>
       ) : null}
@@ -172,7 +176,7 @@ export function DialTargetCard({ className }: { className?: string }) {
               ? `We will call ${prettyPhone(normalized.value)}`
               : shut
                 ? "Indian mobile, with or without +91. Up to 3 calls per number per day."
-                : `Indian mobile, with or without +91. Rings between ${capability.callingWindow.replace("-", " and ")} IST; up to 3 calls per number per day.`
+                : `Indian mobile, with or without +91. Rings between ${windowLabel} ${windowZone}; up to 3 calls per number per day.`
           }
         >
           <Input

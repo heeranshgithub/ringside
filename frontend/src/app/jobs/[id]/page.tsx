@@ -122,7 +122,7 @@ export default function JobDetailPage() {
           <TabsTrigger value="agent">
             Agent {job.agentId ? "" : "·"}
             {!job.agentId && (
-              <span className="ml-1 size-1.5 rounded-full bg-amber-500" aria-label="needs setup" />
+              <span className="bg-live ml-1 size-1.5 rounded-full" aria-label="needs setup" />
             )}
           </TabsTrigger>
           <TabsTrigger value="candidates">Candidates ({job.candidateCount})</TabsTrigger>
