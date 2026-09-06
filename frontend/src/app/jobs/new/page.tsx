@@ -22,12 +22,12 @@ import type { ParsedJob, SearchCriteria } from "@/types/job";
 // of the seeded dataset and creates the same job every time. The marketing one reaches the
 // other half of the seeds and gives a second visitor something different to try.
 const SAMPLE_JDS = {
-  engineering: `Backend Engineer (Python) — Kestrel Logistics, Hyderabad
+  engineering: `Backend Engineer — Kestrel Logistics, Hyderabad
 
-Kestrel runs same-day delivery for 400 dark stores across South India. We are hiring a Backend Engineer to own the order and dispatch services: Python and FastAPI on PostgreSQL and Redis, with Kafka carrying events between services, all on AWS.
+Kestrel runs same-day delivery for 400 dark stores across South India. We are hiring a Backend Engineer to own the order and dispatch services: Python and FastAPI alongside TypeScript and NestJS, on PostgreSQL and Redis, with RabbitMQ carrying events between services, all on AWS.
 
-Must have: 3–5 years building production Python services, FastAPI or Django, solid PostgreSQL (schema design and query tuning), experience with a message queue such as Kafka, and comfort with Docker and CI.
-Nice to have: MongoDB, Celery or another task runner, Kubernetes, prior experience in logistics or quick-commerce.
+Must have: 3–5 years building production backend services in Python or TypeScript, FastAPI or NestJS, solid PostgreSQL (schema design and query tuning), experience with a message broker such as RabbitMQ, and comfort with Docker and CI.
+Nice to have: MongoDB, Celery or another task runner, prior experience in logistics or quick-commerce.
 
 Hybrid (2 days in office, Hyderabad). CTC 18–28 LPA. Immediate joiners preferred; notice period up to 45 days acceptable.`,
   marketing: `Performance Marketing Manager — Saffronleaf Consumer Brands, Gurugram

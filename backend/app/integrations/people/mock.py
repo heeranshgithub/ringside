@@ -28,7 +28,7 @@ _SEED: list[dict] = [
         "title": "Full Stack Engineer",
         "company": "Freshworks",
         "loc": "Chennai, Tamil Nadu, India",
-        "skills": ["node.js", "react", "postgres", "typescript", "aws"],
+        "skills": ["node.js", "nestjs", "react", "postgres", "typescript", "aws"],
         "yrs": 5,
     },
     {
@@ -36,7 +36,7 @@ _SEED: list[dict] = [
         "title": "Backend Engineer",
         "company": "Swiggy",
         "loc": "Hyderabad, Telangana, India",
-        "skills": ["python", "fastapi", "django", "postgres", "redis", "kafka"],
+        "skills": ["python", "fastapi", "django", "postgres", "redis", "rabbitmq"],
         "yrs": 4,
     },
     {
@@ -44,7 +44,7 @@ _SEED: list[dict] = [
         "title": "Senior Backend Engineer",
         "company": "PhonePe",
         "loc": "Pune, Maharashtra, India",
-        "skills": ["java", "spring", "kafka", "mysql", "kubernetes"],
+        "skills": ["java", "spring", "rabbitmq", "mysql", "kubernetes"],
         "yrs": 7,
     },
     {
@@ -204,7 +204,7 @@ _SEED: list[dict] = [
         "title": "Node.js Developer",
         "company": "BYJU'S",
         "loc": "Chennai, Tamil Nadu, India",
-        "skills": ["node.js", "express", "mongodb", "typescript", "docker"],
+        "skills": ["node.js", "nestjs", "express", "mongodb", "typescript", "docker"],
         "yrs": 4,
     },
     {
