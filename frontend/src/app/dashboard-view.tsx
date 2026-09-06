@@ -14,7 +14,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { useGetDashboardQuery } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
 import { useLiveInterval } from "@/features/live/live-provider";
-import { formatDuration, titleCase } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 
 function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
   return (
@@ -134,10 +134,14 @@ export function DashboardView() {
               )}
             </div>
             {Object.keys(data.recommendationCounts).length > 0 && (
-              <div className="border-t pt-3">
+              <div className="space-y-1.5 border-t pt-3">
+                {/* Same badge the call sheet uses for the verdict, under a label that says what
+                    the group is: a bare "Yes 2" under a row of lifecycle states read as a
+                    third state, not as two calls the scorer recommended. */}
+                <p className="text-muted-foreground text-[11px] font-medium">Verdict</p>
                 {Object.entries(data.recommendationCounts).map(([k, v]) => (
-                  <div key={k} className="flex items-center justify-between py-0.5">
-                    <span className="text-muted-foreground text-xs">{titleCase(k)}</span>
+                  <div key={k} className="flex items-center justify-between">
+                    <StatusBadge status={k} />
                     <span className="tabular-nums">{v}</span>
                   </div>
                 ))}
