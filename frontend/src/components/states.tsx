@@ -5,7 +5,8 @@ import { AlertTriangle, Inbox, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getErrorMessage, type ApiError } from "@/lib/errors";
+import { describeError } from "@/lib/errors";
+import type { ApiError } from "@/lib/errors";
 
 export function EmptyState({
   icon,
@@ -44,15 +45,24 @@ export function ErrorState({
   onRetry?: () => void;
   title?: string;
 }) {
-  const message =
-    error instanceof Error ? error.message : getErrorMessage(error as ApiError, "Unexpected error");
+  const summary = describeError(error, title);
   return (
     <div className="border-fail-line bg-fail-bg flex flex-col items-start gap-3 rounded-xl border p-5">
       <div className="text-fail flex items-center gap-2 text-sm font-medium">
         <AlertTriangle className="size-4" />
-        {title}
+        {summary.title}
       </div>
-      <p className="text-muted-foreground font-mono text-xs break-all">{message}</p>
+      <p className="text-muted-foreground text-[13px]">{summary.message}</p>
+      {summary.technical ? (
+        <details className="w-full">
+          <summary className="text-muted-foreground cursor-pointer text-xs select-none">
+            Technical detail
+          </summary>
+          <p className="text-muted-foreground mt-1.5 font-mono text-xs break-all">
+            {summary.technical}
+          </p>
+        </details>
+      ) : null}
       {onRetry && (
         <Button size="sm" variant="outline" onClick={onRetry}>
           <RefreshCw data-icon="inline-start" />
