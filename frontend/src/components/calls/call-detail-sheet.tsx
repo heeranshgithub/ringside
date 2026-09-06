@@ -196,23 +196,33 @@ export function CallDetailBody({ call }: { call: Call }) {
           </div>
         ) : (
           <p className="text-muted-foreground text-sm">
-            {config?.llmEnabled
-              ? "Not transcribed yet. Transcription sends the recording to the configured audio model."
-              : "Transcription needs an OpenRouter key on the backend."}
+            {!config?.llmEnabled
+              ? "Transcription needs an OpenRouter key on the backend."
+              : transcribeState.isLoading
+                ? "Transcribing the recording…"
+                : "Not transcribed yet. Transcription sends the recording to the configured audio model."}
           </p>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={!call.recordingUrl || !config?.llmEnabled || transcribeState.isLoading}
-          onClick={() => run(() => transcribe(call.id).unwrap(), "Transcript ready")}
-        >
-          <ScrollText
-            data-icon="inline-start"
-            className={transcribeState.isLoading ? "animate-pulse" : ""}
-          />
-          {call.transcript ? "Re-transcribe" : "Transcribe"}
-        </Button>
+        {/*
+          No re-transcribe once a transcript exists. The audio never changes, so a second run only
+          costs money and returns the same words; Re-assess is different because its inputs do change.
+          The word on the button changes while it runs because a pulsing icon alone reads as nothing
+          happening: the recording is downloaded and sent up whole, so this is the slowest button here.
+        */}
+        {!call.transcript && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!call.recordingUrl || !config?.llmEnabled || transcribeState.isLoading}
+            onClick={() => run(() => transcribe(call.id).unwrap(), "Transcript ready")}
+          >
+            <ScrollText
+              data-icon="inline-start"
+              className={transcribeState.isLoading ? "animate-pulse" : ""}
+            />
+            {transcribeState.isLoading ? "Transcribing…" : "Transcribe"}
+          </Button>
+        )}
       </Section>
 
       <Section title="Timeline">
