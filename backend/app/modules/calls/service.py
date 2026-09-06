@@ -145,6 +145,20 @@ async def launch_calls(
             )
             continue
         candidate = as_doc(candidate_raw)
+        # One call at a time per candidate. Picking a finished candidate again is allowed, a
+        # second screen is a real thing; a second call while the first is still scheduled,
+        # ringing or mid-conversation never is, and the table cannot be trusted to prevent it.
+        active = await db.calls.find_one(
+            {"candidate_id": cid, "lifecycle_status": {"$nin": list(TERMINAL_LIFECYCLE)}},
+            {"_id": 1},
+        )
+        if active:
+            skipped.append(
+                SkippedCandidateDto(
+                    candidate_id=cid, reason="a call is already in flight for this candidate"
+                )
+            )
+            continue
         try:
             dialed, safe, dial_source = resolve_dial_number(
                 candidate, settings, verified_target=verified_target

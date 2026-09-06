@@ -287,3 +287,23 @@ async def test_access_code_gate(hunar: FakeHunarClient) -> None:
             await c.get("/api/jobs", headers={"X-Access-Code": "open-sesame"})
         ).status_code == 200
         assert (await c.get("/health")).status_code == 200
+
+
+async def test_a_second_launch_while_the_first_call_is_in_flight_is_skipped(
+    client: AsyncClient, hunar: FakeHunarClient
+) -> None:
+    job = await make_job(client)
+    await make_agent(client, job["id"])
+    cand = await make_candidate(client, job["id"])
+    await verify_dial_target(client, hunar, "99999 00000")
+    first = await client.post(
+        "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+    )
+    assert first.status_code == 201 and first.json()["skipped"] == []
+
+    again = await client.post(
+        "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+    )
+    body = again.json()
+    assert body["calls"] == []
+    assert "already in flight" in body["skipped"][0]["reason"]

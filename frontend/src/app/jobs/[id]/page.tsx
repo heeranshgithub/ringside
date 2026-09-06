@@ -448,7 +448,8 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
 
   const list = useMemo(() => candidates ?? [], [candidates]);
   const selectedCandidates = list.filter((c) => selected.has(c.id));
-  const allSelected = list.length > 0 && selected.size === list.length;
+  const selectable = list.filter((c) => !inFlight(c));
+  const allSelected = selectable.length > 0 && selected.size === selectable.length;
   const realDial = config && !config.safeDialMode;
 
   const toggle = (id: string, on: boolean) =>
@@ -527,7 +528,7 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
                     aria-label="Select all"
                     checked={allSelected}
                     onCheckedChange={(on) =>
-                      setSelected(on ? new Set(list.map((c) => c.id)) : new Set())
+                      setSelected(on ? new Set(selectable.map((c) => c.id)) : new Set())
                     }
                   />
                 </TableHead>
@@ -546,6 +547,7 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
                   key={c.id}
                   candidate={c}
                   checked={selected.has(c.id)}
+                  disabled={inFlight(c)}
                   onCheck={(on) => toggle(c.id, on)}
                   realDial={Boolean(realDial)}
                   onToggleRealDial={async (on) => {
@@ -587,9 +589,19 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
   );
 }
 
+// Hunar's raw statuses that mean a call is still on its way or mid-conversation. A candidate in
+// one of these cannot be queued again. A finished one can, since a second screen is a real thing,
+// and the launch dialog says so by name. The server enforces the same rule; this only keeps the
+// checkbox honest.
+const IN_FLIGHT = new Set(["NOT_STARTED", "SCHEDULED", "INITIATED", "RINGING", "IN_PROGRESS"]);
+function inFlight(c: Candidate): boolean {
+  return c.latestCallStatus !== null && IN_FLIGHT.has(c.latestCallStatus);
+}
+
 function CandidateRow({
   candidate: c,
   checked,
+  disabled,
   onCheck,
   realDial,
   onToggleRealDial,
@@ -597,6 +609,7 @@ function CandidateRow({
 }: {
   candidate: Candidate;
   checked: boolean;
+  disabled: boolean;
   onCheck: (on: boolean) => void;
   realDial: boolean;
   onToggleRealDial: (on: boolean) => void;
@@ -606,8 +619,9 @@ function CandidateRow({
     <TableRow>
       <TableCell>
         <Checkbox
-          aria-label={`Select ${c.name}`}
+          aria-label={disabled ? `${c.name} has a call in flight` : `Select ${c.name}`}
           checked={checked}
+          disabled={disabled}
           onCheckedChange={(on) => onCheck(on)}
         />
       </TableCell>
