@@ -8,9 +8,9 @@ from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
 from app.integrations.hunar.client import FakeHunarClient
-from app.integrations.llm.client import RuleBasedLlm
 from app.integrations.people.mock import MockProvider
 from app.main import create_app
+from tests.stub_llm import StubLlm
 
 TEST_KEY = "test-hunar-key"
 
@@ -39,7 +39,7 @@ def hunar() -> FakeHunarClient:
 async def client(settings: Settings, hunar: FakeHunarClient) -> AsyncIterator[AsyncClient]:
     db = AsyncMongoMockClient()["test"]
     app = create_app(
-        settings, db=db, hunar=hunar, llm=RuleBasedLlm(), providers={"mock": MockProvider()}
+        settings, db=db, hunar=hunar, llm=StubLlm(), providers={"mock": MockProvider()}
     )
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)

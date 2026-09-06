@@ -20,7 +20,7 @@ from app.core.logging import configure_logging
 from app.core.models import ApiModel
 from app.core.unconfigured import UnconfiguredHunarClient, UnconfiguredLlm
 from app.integrations.hunar.client import HttpHunarClient, HunarClient
-from app.integrations.llm.client import LlmService, OpenRouterLlm, RuleBasedLlm
+from app.integrations.llm.client import LlmService, OpenRouterLlm
 from app.integrations.people.apollo import ApolloProvider
 from app.integrations.people.base import PeopleProvider
 from app.integrations.people.coresignal import CoresignalProvider
@@ -69,12 +69,6 @@ def _build_llm(settings: Settings) -> LlmService:
             settings.llm_audio_model,
             settings.llm_app_name,
         )
-    if settings.allow_degraded_llm:
-        log.warning(
-            "llm_degraded",
-            note="ALLOW_DEGRADED_LLM is on; parsing and scoring are rule-based, not model output",
-        )
-        return RuleBasedLlm()
     log.warning("llm_unconfigured", note="OPENROUTER_API_KEY missing; LLM features will refuse")
     return UnconfiguredLlm()
 

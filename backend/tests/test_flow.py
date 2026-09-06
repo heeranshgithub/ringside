@@ -12,15 +12,21 @@ from tests.conftest import TEST_KEY, make_agent, make_candidate, make_job
 
 
 async def test_parse_job_returns_criteria(client: AsyncClient) -> None:
+    """The route wires the model's answer through to the DTO.
+
+    This asserts plumbing, not parsing quality: the app owns no parser of its own, so the
+    values here are whatever the injected model returned.
+    """
     resp = await client.post(
         "/api/jobs/parse",
         json={"description": "Senior Python developer in Bengaluru with FastAPI and AWS. " * 2},
     )
     assert resp.status_code == 200
     body = resp.json()
-    assert body["llmUsed"] is False
-    assert "python" in body["searchCriteria"]["skills"]
-    assert "Bengaluru" in body["searchCriteria"]["locations"]
+    assert body["llmUsed"] is True
+    assert body["title"] == "Senior Frontend Engineer (Next.js)"
+    assert body["searchCriteria"]["skills"] == ["react", "typescript"]
+    assert body["searchCriteria"]["locations"] == ["Bengaluru"]
 
 
 async def test_job_agent_candidate_call_roundtrip(
@@ -205,8 +211,8 @@ async def test_access_code_gate(hunar: FakeHunarClient) -> None:
     from mongomock_motor import AsyncMongoMockClient
 
     from app.core.config import Settings
-    from app.integrations.llm.client import RuleBasedLlm
     from app.main import create_app
+    from tests.stub_llm import StubLlm
 
     s = Settings(
         env="test",
@@ -215,7 +221,7 @@ async def test_access_code_gate(hunar: FakeHunarClient) -> None:
         app_access_code="open-sesame",
         poller_enabled=False,
     )
-    app = create_app(s, db=AsyncMongoMockClient()["t"], hunar=hunar, llm=RuleBasedLlm())
+    app = create_app(s, db=AsyncMongoMockClient()["t"], hunar=hunar, llm=StubLlm())
     async with (
         app.router.lifespan_context(app),
         AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as c,

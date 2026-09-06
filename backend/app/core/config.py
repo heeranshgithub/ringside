@@ -57,9 +57,6 @@ class Settings(BaseSettings):
     llm_model: str = "anthropic/claude-sonnet-5"
     llm_audio_model: str = "google/gemini-2.5-flash"
     llm_app_name: str = "Ringside"
-    # Off by default: the rule-based parser produces output that looks like model output
-    # and is not, so it has to be asked for rather than arrived at by forgetting a key.
-    allow_degraded_llm: bool = False
 
     # People search providers. PDL is the primary: 100 free searches a month, plus a
     # zero-credit sandbox with an identical schema for development.

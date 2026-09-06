@@ -107,8 +107,13 @@ on exit. While the tunnel is open the backend is publicly reachable, so set `APP
   do the same. The in-memory simulators still exist and the tests inject them, but nothing reaches them by
   forgetting to configure something, because a simulator that returns real-looking ids is the worst kind of
   failure: it reports success and changes nothing. `GET /api/config` publishes a capability report and the
-  UI turns it into a banner on every screen that needs the key. `ALLOW_DEGRADED_LLM=true` opts into the
-  offline parser deliberately.
+  UI turns it into a banner on every screen that needs the key.
+- **No LLM fallback exists at all.** There is no rule-based parser to fall into, and no flag to enable one.
+  Without a key, or when the OpenRouter account runs out of credit or gets rate limited, job parsing, agent
+  drafting, scoring and transcription refuse with an error that names the cause (`llm_quota_exhausted`,
+  `llm_credential_rejected`, `credential_missing`). An invented fit score sitting next to a real recording
+  is indistinguishable from a real one, which is exactly why it is not allowed to exist. Tests inject
+  `tests/stub_llm.py`, which deliberately lives outside `app/` so no misconfiguration can reach it.
 
 ## Run it locally
 

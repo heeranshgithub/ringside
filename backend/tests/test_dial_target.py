@@ -13,9 +13,9 @@ from app.core.config import Settings
 from app.core.errors import ValidationFailed
 from app.core.phone import assert_dialable, mask, normalize_phone, pretty
 from app.integrations.hunar.client import FakeHunarClient
-from app.integrations.llm.client import RuleBasedLlm
 from app.main import create_app
 from app.modules.calls.service import resolve_dial_number
+from tests.stub_llm import StubLlm
 
 SESSION = "session-abcdef123456"
 
@@ -149,7 +149,7 @@ async def _client(hunar: FakeHunarClient, **kw: object) -> AsyncIterator[AsyncCl
             **kw,
         }
     )
-    app = create_app(settings, db=AsyncMongoMockClient()["t"], hunar=hunar, llm=RuleBasedLlm())
+    app = create_app(settings, db=AsyncMongoMockClient()["t"], hunar=hunar, llm=StubLlm())
     async with (
         app.router.lifespan_context(app),
         AsyncClient(

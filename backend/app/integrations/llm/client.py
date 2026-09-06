@@ -1,5 +1,10 @@
-"""LLM access through OpenRouter (OpenAI-compatible). One Protocol, a real client, and a
-deterministic fallback used in tests and when no key is configured."""
+"""LLM access through OpenRouter (OpenAI-compatible).
+
+There is deliberately no fallback implementation here. With no key, or with the account out
+of credit, the language-model features refuse with an error naming the cause; they never
+degrade into keyword matching that produces model-shaped output nobody can tell apart.
+Tests inject `tests/stub_llm.py`.
+"""
 
 from __future__ import annotations
 
@@ -12,13 +17,12 @@ import httpx
 import structlog
 from pydantic import BaseModel, ValidationError
 
-from app.core.errors import LlmError
+from app.core.errors import LlmCredentialRejected, LlmError, LlmQuotaExhausted
 from app.integrations.llm import prompts
 from app.integrations.llm.schemas import (
     AgentDraft,
     CallAssessment,
     ParsedJob,
-    ParsedSearchCriteria,
     Transcript,
 )
 
@@ -35,6 +39,26 @@ class LlmService(Protocol):
         self, job: dict[str, Any], result: dict[str, Any], transcript: str | None
     ) -> CallAssessment: ...
     async def transcribe(self, recording_url: str) -> Transcript: ...
+
+
+def _classify(exc: Exception) -> LlmError:
+    """Name the real cause, so an empty wallet never looks like a bug in this app."""
+    status = getattr(exc, "status_code", None)
+    if status == 401 or status == 403:
+        return LlmCredentialRejected(
+            "OpenRouter rejected the API key. Check OPENROUTER_API_KEY is valid and active."
+        )
+    if status == 402:
+        return LlmQuotaExhausted(
+            "The OpenRouter account is out of credit. Top it up to re-enable these features."
+        )
+    if status == 429:
+        return LlmQuotaExhausted(
+            "OpenRouter is rate limiting this key. Wait a moment and try again."
+        )
+    if status == 404:
+        return LlmError(f"OpenRouter does not recognise the configured model: {exc}")
+    return LlmError(f"LLM request failed: {exc}")
 
 
 def _extract_json(text: str) -> Any:
@@ -91,7 +115,7 @@ class OpenRouterLlm:
                     {"role": "user", "content": f"Invalid JSON ({exc}). Return only valid JSON."}
                 )
             except Exception as exc:  # network / provider errors
-                raise LlmError(f"LLM request failed: {exc}") from exc
+                raise _classify(exc) from exc
         raise LlmError(f"LLM returned invalid JSON: {last_error}")
 
     async def parse_job(self, description: str) -> ParsedJob:
@@ -157,184 +181,3 @@ def _sanitize_draft(draft: AgentDraft) -> AgentDraft:
         }
     draft.name = draft.name[:64]
     return draft
-
-
-class RuleBasedLlm:
-    """No-key fallback. Deterministic, good enough to keep the product usable and testable."""
-
-    enabled = False
-
-    async def parse_job(self, description: str) -> ParsedJob:
-        lines = [ln.strip() for ln in description.strip().splitlines() if ln.strip()]
-        first = lines[0] if lines else "Untitled role"
-        # "Senior Engineer - Acme, Bengaluru" -> title "Senior Engineer", company "Acme"
-        dashes = "\u2014\u2013|@"  # em dash, en dash, pipe, at (hyphen added last)
-        title = (
-            re.split(rf"\s+[{dashes},-]\s+|\s+at\s+", first, maxsplit=1)[0].strip()[:80]
-            or first[:80]
-        )
-        company = None
-        m = re.search(rf"\s+[{dashes}-]\s+([^,|]+?)(?:,|$)", first)
-        if m:
-            company = m.group(1).strip()[:80]
-        low = description.lower()
-        known_skills = [
-            "python",
-            "fastapi",
-            "django",
-            "node.js",
-            "typescript",
-            "react",
-            "next.js",
-            "aws",
-            "docker",
-            "kubernetes",
-            "sql",
-            "postgres",
-            "mongodb",
-            "java",
-            "go",
-            "sales",
-            "crm",
-            "excel",
-            "hindi",
-            "english",
-            "tamil",
-            "kannada",
-            "telugu",
-            "marketing",
-            "seo",
-            "customer support",
-        ]
-        skills = [s for s in known_skills if s in low]
-        cities = [
-            "bengaluru",
-            "bangalore",
-            "mumbai",
-            "delhi",
-            "hyderabad",
-            "chennai",
-            "pune",
-            "gurugram",
-            "noida",
-            "kolkata",
-            "ahmedabad",
-            "remote",
-        ]
-        locations = [c.title() for c in cities if c in low]
-        seniority = (
-            "senior"
-            if "senior" in low or "lead" in low
-            else "entry"
-            if "fresher" in low or "junior" in low
-            else None
-        )
-        questions = [
-            "Are you currently open to new opportunities?",
-            "How many years of relevant experience do you have?",
-            "Which city are you based in, and are you open to relocation?",
-            "What is your current and expected salary?",
-            "What is your notice period or earliest joining date?",
-        ]
-        return ParsedJob(
-            title=title,
-            company=company,
-            location=locations[0] if locations else None,
-            seniority=seniority,
-            summary=" ".join(lines[1:4])[:400],
-            must_haves=skills[:6],
-            screening_questions=questions,
-            search_criteria=ParsedSearchCriteria(
-                titles=[title],
-                locations=locations[:3],
-                skills=skills[:8],
-                seniorities=[seniority] if seniority else [],
-                keywords=title,
-            ),
-        )
-
-    async def draft_agent(self, job: dict[str, Any]) -> AgentDraft:
-        questions = job.get("screening_questions") or []
-        q_text = "\n".join(f"- {q}" for q in questions) or "- Are you interested in this role?"
-        return AgentDraft(
-            name=f"Screener: {job.get('title', 'Role')}"[:64],
-            persona_name="Neha",
-            voice_persona="NEHA",
-            language="ENGLISH",
-            introduction=(
-                "Hi {candidate_name}, this is {persona_name} calling from the hiring team at "
-                "{company} about the {job_role} position. Is this a good time for a two-minute "
-                "chat?"
-            ),
-            objective=(
-                "Screen the candidate for the {job_role} role at {company} and collect "
-                "structured hiring signals."
-            ),
-            agent_prompt=(
-                "You are {persona_name}, a polite and efficient recruiting assistant for "
-                "{company}. You are calling {candidate_name} about the {job_role} role based in "
-                "{location}. Ask one question at a time, confirm key facts by repeating them, "
-                "keep the call under four minutes, and speak simply. If the candidate is busy or "
-                "not interested, thank them and end the call politely. Cover these questions:\n"
-                + q_text
-            ),
-            result_prompt=(
-                "From the conversation, extract a JSON object matching the schema. Use "
-                '"unknown" when a fact was not discussed. recommendation must be hire_now, '
-                "maybe, reject or unknown."
-            ),
-            result_schema={
-                "summary": "string",
-                "interested": "boolean",
-                "years_experience": "string",
-                "current_location": "string",
-                "open_to_relocation": "boolean",
-                "current_ctc": "string",
-                "expected_ctc": "string",
-                "notice_period_days": "string",
-                "recommendation": "string",
-            },
-        )
-
-    async def assess_call(
-        self, job: dict[str, Any], result: dict[str, Any], transcript: str | None
-    ) -> CallAssessment:
-        known = {
-            k: v
-            for k, v in result.items()
-            if str(v).lower() not in {"unknown", "not available", "", "none"}
-        }
-        if not known:
-            return CallAssessment(
-                fit_score=5,
-                recommendation="insufficient_data",
-                headline="No usable answers captured.",
-            )
-        interested = str(result.get("interested", "")).lower() in {"true", "yes", "interested"}
-        rec = str(result.get("recommendation", "")).lower()
-        score = (
-            40
-            + (25 if interested else -20)
-            + (25 if rec == "hire_now" else 5 if rec == "maybe" else -25 if rec == "reject" else 0)
-        )
-        score = max(0, min(100, score))
-        label = (
-            "strong_yes"
-            if score >= 80
-            else "yes"
-            if score >= 60
-            else "maybe"
-            if score >= 40
-            else "no"
-        )
-        return CallAssessment(
-            fit_score=score,
-            recommendation=label,
-            headline=str(result.get("summary") or "Screening completed.")[:160],
-            strengths=[f"{k}: {v}" for k, v in list(known.items())[:4]],
-            concerns=[] if interested else ["Candidate did not confirm interest."],
-            next_step="Schedule technical interview" if score >= 60 else "Keep in pipeline",
-        )
-
-    async def transcribe(self, recording_url: str) -> Transcript:
-        raise LlmError("Transcription requires an OpenRouter API key (OPENROUTER_API_KEY).")

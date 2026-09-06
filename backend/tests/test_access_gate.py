@@ -17,8 +17,8 @@ from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
 from app.integrations.hunar.client import FakeHunarClient
-from app.integrations.llm.client import RuleBasedLlm
 from app.main import create_app
+from tests.stub_llm import StubLlm
 
 CODE = "test-access-code"
 
@@ -53,7 +53,7 @@ async def _app() -> AsyncIterator[tuple[AsyncClient, list[tuple[str, str]]]]:
         _settings(),
         db=AsyncMongoMockClient()["t"],
         hunar=FakeHunarClient(),
-        llm=RuleBasedLlm(),
+        llm=StubLlm(),
     )
     verbs = {"get", "post", "patch", "delete", "put"}
     surface = [
@@ -100,6 +100,6 @@ async def test_a_wrong_code_is_not_a_missing_code() -> None:
 def test_interactive_docs_are_not_published_in_production(env: str, expect_docs: bool) -> None:
     settings = Settings(_env_file=None, env=env, mongodb_uri="mongodb://unused", hunar_api_key="k")
     app = create_app(
-        settings, db=AsyncMongoMockClient()["t"], hunar=FakeHunarClient(), llm=RuleBasedLlm()
+        settings, db=AsyncMongoMockClient()["t"], hunar=FakeHunarClient(), llm=StubLlm()
     )
     assert (app.docs_url is not None) is expect_docs

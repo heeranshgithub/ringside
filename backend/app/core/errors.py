@@ -85,6 +85,20 @@ class LlmError(UpstreamError):
     code = "llm_error"
 
 
+class LlmCredentialRejected(LlmError):
+    """The key exists but the provider will not honour it."""
+
+    status_code = 503
+    code = "llm_credential_rejected"
+
+
+class LlmQuotaExhausted(LlmError):
+    """Out of credit, or rate limited. Not a bug, and not something to paper over."""
+
+    status_code = 503
+    code = "llm_quota_exhausted"
+
+
 def _envelope(
     code: str, message: str, request: Request, details: dict[str, Any] | None = None
 ) -> dict[str, Any]:

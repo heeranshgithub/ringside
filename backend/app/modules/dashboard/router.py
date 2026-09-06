@@ -75,15 +75,11 @@ def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
         CapabilityDto(
             key="llm",
             label="Language model",
-            state="ok" if c.llm.enabled else ("degraded" if s.allow_degraded_llm else "missing"),
+            state="ok" if c.llm.enabled else "missing",
             detail=(
                 f"Parsing, drafting and scoring use {s.llm_model}."
                 if c.llm.enabled
-                else (
-                    "Offline rule-based parser. Looks like model output, but is keyword matching."
-                    if s.allow_degraded_llm
-                    else "Job parsing, agent drafting, scoring and transcription will be refused."
-                )
+                else "Job parsing, agent drafting, scoring and transcription are refused."
             ),
             env_var=None if c.llm.enabled else "OPENROUTER_API_KEY",
         ),

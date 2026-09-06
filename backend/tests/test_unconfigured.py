@@ -14,8 +14,8 @@ from httpx import ASGITransport, AsyncClient
 from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
+from app.core.unconfigured import UnconfiguredLlm
 from app.integrations.hunar.client import FakeHunarClient
-from app.integrations.llm.client import RuleBasedLlm
 from app.main import _build_hunar, _build_llm, create_app
 
 
@@ -35,11 +35,17 @@ class TestNoSimulatorByAccident:
     def test_missing_hunar_key_does_not_yield_the_fake(self) -> None:
         assert not isinstance(_build_hunar(settings()), FakeHunarClient)
 
-    def test_missing_llm_key_does_not_yield_the_rule_based_parser(self) -> None:
-        assert not isinstance(_build_llm(settings()), RuleBasedLlm)
+    def test_missing_llm_key_yields_a_refusing_stand_in(self) -> None:
+        llm = _build_llm(settings())
+        assert isinstance(llm, UnconfiguredLlm)
+        assert llm.enabled is False
 
-    def test_the_offline_parser_requires_an_explicit_opt_in(self) -> None:
-        assert isinstance(_build_llm(settings(allow_degraded_llm=True)), RuleBasedLlm)
+    def test_no_degraded_llm_implementation_ships_in_the_app(self) -> None:
+        """There is no keyword-matching fallback to fall into, by flag or otherwise."""
+        import app.integrations.llm.client as llm_module
+
+        assert not hasattr(llm_module, "RuleBasedLlm")
+        assert not hasattr(Settings(_env_file=None), "allow_degraded_llm")
 
 
 class TestRefusals:
@@ -70,15 +76,13 @@ class TestRefusals:
             assert resp.json()["error"]["code"] == "credential_missing"
             assert "OPENROUTER_API_KEY" in resp.json()["error"]["message"]
 
-    async def test_the_opt_in_parser_works_and_says_it_is_not_a_model(self) -> None:
-        s = settings(hunar_api_key="x", allow_degraded_llm=True)
-        async for client in app_client(s):
-            resp = await client.post(
-                "/api/jobs/parse",
-                json={"description": "Senior Python developer in Bengaluru with FastAPI. " * 2},
-            )
-            assert resp.status_code == 200
-            assert resp.json()["llmUsed"] is False
+    async def test_scoring_a_call_without_an_llm_key_is_refused(self) -> None:
+        """The worst fallback was an invented fit score, so prove it cannot happen."""
+        async for client in app_client(settings(hunar_api_key="x")):
+            resp = await client.post("/api/calls/does-not-exist/assess")
+            # Either the call is missing or the LLM refuses; what must never happen is a score.
+            assert resp.status_code in (404, 503)
+            assert "fitScore" not in resp.text
 
 
 class TestCapabilityReport:
@@ -88,7 +92,6 @@ class TestCapabilityReport:
             ({}, "hunar", "missing"),
             ({"hunar_api_key": "x"}, "hunar", "ok"),
             ({}, "llm", "missing"),
-            ({"allow_degraded_llm": True}, "llm", "degraded"),
             ({"openrouter_api_key": "x"}, "llm", "ok"),
             ({}, "dialling", "missing"),
             ({"test_phone_numbers": "+919999900000"}, "dialling", "ok"),
@@ -113,3 +116,34 @@ class TestCapabilityReport:
             assert missing["hunar"] == "HUNAR_API_KEY"
             assert missing["llm"] == "OPENROUTER_API_KEY"
             assert missing["dialling"] == "TEST_PHONE_NUMBERS"
+
+
+class TestRuntimeFailuresAreNamed:
+    """A key that exists but stops working must not look like an app bug."""
+
+    @pytest.mark.parametrize(
+        ("status", "code", "phrase"),
+        [
+            (401, "llm_credential_rejected", "rejected the API key"),
+            (403, "llm_credential_rejected", "rejected the API key"),
+            (402, "llm_quota_exhausted", "out of credit"),
+            (429, "llm_quota_exhausted", "rate limiting"),
+            (404, "llm_error", "does not recognise the configured model"),
+            (500, "llm_error", "LLM request failed"),
+        ],
+    )
+    def test_provider_status_maps_to_a_specific_error(
+        self, status: int, code: str, phrase: str
+    ) -> None:
+        from app.integrations.llm.client import _classify
+
+        exc = Exception("upstream said no")
+        exc.status_code = status  # type: ignore[attr-defined]
+        err = _classify(exc)
+        assert err.code == code
+        assert phrase in err.message
+
+    def test_an_exhausted_quota_is_a_503_not_a_500(self) -> None:
+        from app.core.errors import LlmQuotaExhausted
+
+        assert LlmQuotaExhausted().status_code == 503
