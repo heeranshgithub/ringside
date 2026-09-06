@@ -42,18 +42,38 @@ type RowState = keyof typeof STATE;
  *
  * The lamp element is always rendered, transparent when the row has no state, so a stateless
  * row's label does not slide left and break the same alignment from the other direction.
+ *
+ * `detail` gets its own line under the label rather than sharing the value column. Squeezed
+ * into that column it had roughly a third of the card to wrap in, and being right-aligned it
+ * wrapped to a ragged left edge with orphans: one row broke a model name across lines and
+ * left "5." sitting alone. On its own line it has the full width, so at any normal card size
+ * it does not wrap at all, and if it ever does it wraps against a straight left edge. The
+ * indent is the lamp plus its gap, which puts the detail under the first letter of the label.
  */
-function Row({ label, value, state }: { label: string; value: React.ReactNode; state?: RowState }) {
+function Row({
+  label,
+  value,
+  state,
+  detail,
+}: {
+  label: string;
+  value: React.ReactNode;
+  state?: RowState;
+  detail?: string;
+}) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b py-2 text-sm last:border-0">
-      <span className="text-muted-foreground flex items-center gap-2">
-        <span
-          className={`size-2 shrink-0 rounded-full ${state ? STATE[state].lamp : "bg-transparent"}`}
-          aria-hidden
-        />
-        {label}
-      </span>
-      <span className="text-right">{value}</span>
+    <div className="border-b py-2 text-sm last:border-0">
+      <div className="flex items-start justify-between gap-4">
+        <span className="text-muted-foreground flex items-center gap-2">
+          <span
+            className={`size-2 shrink-0 rounded-full ${state ? STATE[state].lamp : "bg-transparent"}`}
+            aria-hidden
+          />
+          {label}
+        </span>
+        <span className="text-right">{value}</span>
+      </div>
+      {detail && <p className="text-muted-foreground mt-0.5 pl-4 text-[11.5px]">{detail}</p>}
     </div>
   );
 }
@@ -106,15 +126,8 @@ export default function SettingsPage() {
                 key={cap.key}
                 label={cap.label}
                 state={cap.state}
-                value={
-                  <span className="flex flex-col items-end">
-                    <span className={STATE[cap.state].ink}>{STATE[cap.state].word}</span>
-                    <span className="text-muted-foreground max-w-80 text-right text-[11.5px]">
-                      {cap.detail}
-                      {cap.envVar ? ` Set ${cap.envVar}.` : ""}
-                    </span>
-                  </span>
-                }
+                value={<span className={STATE[cap.state].ink}>{STATE[cap.state].word}</span>}
+                detail={cap.envVar ? `${cap.detail} Set ${cap.envVar}.` : cap.detail}
               />
             ))}
           </CardContent>
