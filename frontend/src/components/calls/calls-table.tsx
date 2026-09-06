@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatDuration, formatRelative } from "@/lib/format";
+import { formatClockDay, formatDuration, formatRelative } from "@/lib/format";
 import type { Call } from "@/types/call";
 
 export function CallsTable({
@@ -42,7 +42,16 @@ export function CallsTable({
             const summary =
               c.assessment?.headline ??
               (typeof c.result.summary === "string" ? c.result.summary : null);
-            const retrying = c.status === "NOT_CONNECTED" && (c.retriesLeft ?? 0) > 0;
+            // Hunar counts the first attempt inside max_retries, so retry_count + retries_left is
+            // the total and retry_count + 1 is the attempt it will make next. Between attempts the
+            // status reads SCHEDULED, not NOT_CONNECTED, so the lifecycle is the reliable gate.
+            const attemptsMade = c.retryCount ?? 0;
+            const retrying =
+              c.lifecycleStatus === "IN_PROGRESS" && attemptsMade > 0 && (c.retriesLeft ?? 0) > 0;
+            const retryLine = retrying
+              ? `Retrying · attempt ${attemptsMade + 1} of ${attemptsMade + (c.retriesLeft ?? 0)}` +
+                (c.nextRetryScheduledAt ? ` · next ${formatClockDay(c.nextRetryScheduledAt)}` : "")
+              : null;
             return (
               <TableRow
                 key={c.id}
@@ -63,8 +72,8 @@ export function CallsTable({
                       ? "Engaged"
                       : c.engagementStatus === "NOT_ENGAGED"
                         ? "Did not engage"
-                        : retrying
-                          ? "Retry queued"
+                        : retryLine
+                          ? retryLine
                           : c.safeDial
                             ? "Safe dial"
                             : "Direct dial"}

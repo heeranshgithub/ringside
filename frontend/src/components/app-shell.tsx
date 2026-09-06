@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   Bot,
   BriefcaseBusiness,
-  ClipboardCheck,
   LayoutDashboard,
   Menu,
   Monitor,
@@ -32,8 +31,7 @@ const NAV = [
   { href: "/search", label: "People search", icon: Search, group: null },
   { href: "/agents", label: "Voice agents", icon: Bot, group: "Calling" },
   { href: "/calls", label: "Calls", icon: PhoneCall, group: null },
-  { href: "/attendance", label: "Attendance", icon: ClipboardCheck, group: "Workspace" },
-  { href: "/settings", label: "Settings", icon: Settings, group: null },
+  { href: "/settings", label: "Settings", icon: Settings, group: "Workspace" },
 ] as const;
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

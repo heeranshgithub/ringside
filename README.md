@@ -16,7 +16,7 @@ the structured answers, recording, transcript and fit score on a dashboard.
 |---|-----|----------------|
 | 1 | AI Hiring Assistant using Hunar voice agents | `/jobs/new` → job → **Agent** tab (LLM drafts the agent) → **Candidates** → **Start calls** → **Calls** tab |
 | 2 | People search & reach-out with a results dashboard | `/search` (JD → criteria → provider search → import → call) and every job's Calls tab |
-| 3 | Attendance for 1,000 people at 100 sites with no smartphones | `/attendance` (a written design, also summarised [below](#question-3-attendance-without-smartphones)) |
+| 3 | Attendance for 1,000 people at 100 sites with no smartphones | A written design, [below](#question-3-attendance-without-smartphones) |
 
 ## How it works
 
@@ -253,5 +253,9 @@ fact-collection problem with three hard parts: identity, presence, and exception
    HR sees one page: silent sites, three-day absentees, unapproved replacements. Agents call the silent sites so HR
    does not have to. Paper sheets photographed or faxed are read by a vision model as the last fallback.
 
-Roughly 500 voice-minutes a day for 1,000 people, a fraction of the clerical cost it replaces. The full write-up,
-including why not SMS-only or biometrics-everywhere, is on the `/attendance` page of the app.
+**Why this and not something else.** Not SMS-only: typing structured codes on a keypad has a high error rate and no
+proof of location, so SMS stays as the receipt channel. Not biometrics everywhere: machines cost money, break, and need
+a PC and power at every site; use them where they already exist, never depend on them. Not a human call centre: 100
+supervisor calls a day is a small team of clerks with sick days and inconsistent notes, while voice agents make the
+same call, the same way, at 08:20 sharp, and hand back JSON. Paper is the last fallback: a site with no signal keeps a
+signed sheet, and a photo or fax of it is read by a vision model into the same table, flagged low-confidence.

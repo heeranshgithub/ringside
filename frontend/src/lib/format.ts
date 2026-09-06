@@ -11,6 +11,23 @@ export function formatDateTime(iso: string | null | undefined): string {
   });
 }
 
+/** A clock time with the day only when it is not today: "09:06 tomorrow", "07 Sep, 09:06". */
+export function formatClockDay(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const clock = d.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(d) - startOfDay(new Date())) / 86_400_000);
+  if (days === 0) return `${clock} today`;
+  if (days === 1) return `${clock} tomorrow`;
+  return `${d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}, ${clock}`;
+}
+
 export function formatRelative(iso: string | null | undefined): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();
