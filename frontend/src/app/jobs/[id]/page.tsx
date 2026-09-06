@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AgentForm, type AgentFormOutput } from "@/components/agents/agent-form";
 import { CallDetailSheet } from "@/components/calls/call-detail-sheet";
 import { CallsTable } from "@/components/calls/calls-table";
@@ -71,6 +72,7 @@ export default function JobDetailPage() {
   const [tab, setTab] = useState<Tab>(initialTab);
   const { data: job, error, isLoading, refetch } = useGetJobQuery(id);
   const [deleteJob] = useDeleteJobMutation();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (isLoading) return <PageSkeleton />;
   if (error || !job) return <ErrorState error={error} onRetry={() => void refetch()} />;
@@ -92,28 +94,29 @@ export default function JobDetailPage() {
           [job.company, job.location, job.seniority].filter(Boolean).join(" · ") || job.summary
         }
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive"
-            onClick={async () => {
-              if (
-                !window.confirm(
-                  "Delete this job, its candidates and call records? The Hunar agent itself is kept.",
-                )
-              )
-                return;
-              try {
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive"
+              onClick={() => setConfirmDelete(true)}
+            >
+              <Trash2 data-icon="inline-start" /> Delete
+            </Button>
+            <ConfirmDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title="Delete this job?"
+              description="Its candidates and call records are deleted with it. The Hunar agent itself is kept."
+              confirmLabel="Delete job"
+              pendingLabel="Deleting…"
+              onConfirm={async () => {
                 await deleteJob(job.id).unwrap();
                 toast.success("Job deleted");
                 router.push("/jobs");
-              } catch (e) {
-                toast.error(getErrorMessage(e as never));
-              }
-            }}
-          >
-            <Trash2 data-icon="inline-start" /> Delete
-          </Button>
+              }}
+            />
+          </>
         }
       />
 

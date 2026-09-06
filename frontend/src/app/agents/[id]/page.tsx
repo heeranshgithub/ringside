@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { RefreshCw, Trash2 } from "lucide-react";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { AgentForm, type AgentFormOutput } from "@/components/agents/agent-form";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState, PageSkeleton } from "@/components/states";
@@ -23,6 +25,7 @@ export default function AgentDetailPage() {
   const { data: agent, error, isLoading, refetch } = useGetAgentQuery(id);
   const [updateAgent, updateState] = useUpdateAgentMutation();
   const [deleteAgent] = useDeleteAgentMutation();
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   if (isLoading) return <PageSkeleton />;
   if (error || !agent) return <ErrorState error={error} onRetry={() => void refetch()} />;
@@ -55,23 +58,22 @@ export default function AgentDetailPage() {
               variant="ghost"
               size="sm"
               className="text-destructive"
-              onClick={async () => {
-                if (
-                  !window.confirm(
-                    "Remove this agent from the app? It stays on Hunar (the API has no delete).",
-                  )
-                )
-                  return;
-                try {
-                  await deleteAgent(agent.id).unwrap();
-                  router.push("/agents");
-                } catch (e) {
-                  toast.error(getErrorMessage(e as never));
-                }
-              }}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 data-icon="inline-start" /> Remove
             </Button>
+            <ConfirmDialog
+              open={confirmDelete}
+              onOpenChange={setConfirmDelete}
+              title="Remove this agent?"
+              description="It is removed from the app only. Hunar has no delete, so the agent itself stays there."
+              confirmLabel="Remove agent"
+              pendingLabel="Removing…"
+              onConfirm={async () => {
+                await deleteAgent(agent.id).unwrap();
+                router.push("/agents");
+              }}
+            />
           </>
         }
       />
