@@ -22,14 +22,14 @@ import type { ParsedJob, SearchCriteria } from "@/types/job";
 // of the seeded dataset and creates the same job every time. The marketing one reaches the
 // other half of the seeds and gives a second visitor something different to try.
 const SAMPLE_JDS = {
-  engineering: `Senior Frontend Engineer (Next.js) — Northline Labs, Bengaluru
+  engineering: `Backend Engineer (Python) — Kestrel Logistics, Hyderabad
 
-We are hiring a Senior Frontend Engineer to own our recruiter-facing dashboard. You will work with React 19, Next.js App Router, TypeScript and Tailwind, partnering with a Python backend team.
+Kestrel runs same-day delivery for 400 dark stores across South India. We are hiring a Backend Engineer to own the order and dispatch services: Python and FastAPI on PostgreSQL and Redis, with Kafka carrying events between services, all on AWS.
 
-Must have: 5+ years building production React apps, strong TypeScript, experience with data-heavy UIs and state management (Redux Toolkit or similar), and comfort owning features end to end.
-Nice to have: Playwright, design-system experience, prior startup experience.
+Must have: 3–5 years building production Python services, FastAPI or Django, solid PostgreSQL (schema design and query tuning), experience with a message queue such as Kafka, and comfort with Docker and CI.
+Nice to have: MongoDB, Celery or another task runner, Kubernetes, prior experience in logistics or quick-commerce.
 
-Hybrid (3 days in office, Bengaluru). CTC 30–45 LPA. Immediate joiners preferred; notice period up to 60 days acceptable.`,
+Hybrid (2 days in office, Hyderabad). CTC 18–28 LPA. Immediate joiners preferred; notice period up to 45 days acceptable.`,
   marketing: `Performance Marketing Manager — Saffronleaf Consumer Brands, Gurugram
 
 Saffronleaf is a D2C personal-care brand (₹90 crore ARR) hiring a Performance Marketing Manager to own paid acquisition end to end across Meta, Google and Amazon Ads, starting from a ₹1.2 crore monthly budget. You will manage a designer, a copywriter and two agency relationships, and own CAC, ROAS and LTV reporting for the leadership team.
