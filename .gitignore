@@ -33,3 +33,6 @@ scratch/
 
 # impeccable working files (captures and decision-page logs, all regenerated)
 .impeccable/
+
+# Claude Code session worktrees
+.claude/worktrees/
