@@ -45,7 +45,7 @@ def _validate_choices(language: str | None, voice_persona: str | None) -> None:
 async def draft_agent(db: Db, llm: LlmService, job_id: str) -> AgentDraftDto:
     job = await get_job_doc(db, job_id)
     draft = await llm.draft_agent(job_for_llm(job))
-    return AgentDraftDto.model_validate({**draft.model_dump(), "llm_used": llm.enabled})
+    return AgentDraftDto.model_validate(draft.model_dump())
 
 
 def _mirror(

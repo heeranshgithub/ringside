@@ -34,7 +34,6 @@ const STARTER = {
     notice_period_days: "string",
     recommendation: "string",
   },
-  llmUsed: false,
 };
 
 export default function NewAgentPage() {

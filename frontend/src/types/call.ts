@@ -33,7 +33,6 @@ export interface Assessment {
   strengths: string[];
   concerns: string[];
   nextStep: string;
-  llmUsed: boolean;
 }
 
 export interface Call {

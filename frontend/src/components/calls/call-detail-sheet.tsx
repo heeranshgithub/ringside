@@ -121,9 +121,7 @@ export function CallDetailBody({ call }: { call: Call }) {
             <div className="flex items-center gap-2">
               <ScorePill score={call.assessment.fitScore} />
               <StatusBadge status={call.assessment.recommendation} />
-              <span className="text-muted-foreground ml-auto text-[11px]">
-                {call.assessment.llmUsed ? "LLM" : "rule-based"}
-              </span>
+              <span className="text-muted-foreground ml-auto text-[11px]">model-scored</span>
             </div>
             <p className="text-sm">{call.assessment.headline}</p>
             {call.assessment.strengths.length > 0 && (

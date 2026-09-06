@@ -51,7 +51,6 @@ class ParsedJobDto(ApiModel):
     nice_to_haves: list[str] = Field(default_factory=list)
     screening_questions: list[str] = Field(default_factory=list)
     search_criteria: SearchCriteriaDto = Field(default_factory=SearchCriteriaDto)
-    llm_used: bool = False
 
 
 class ParseJobRequest(StrictApiModel):

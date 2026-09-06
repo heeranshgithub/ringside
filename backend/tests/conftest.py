@@ -53,8 +53,7 @@ You will own the hiring dashboard UI. Nice to have: Redux, testing with Playwrig
 
 
 async def make_job(client: AsyncClient) -> dict:
-    parsed = (await client.post("/api/jobs/parse", json={"description": JD})).json()
-    body = {k: v for k, v in parsed.items() if k != "llmUsed"}
+    body = (await client.post("/api/jobs/parse", json={"description": JD})).json()
     body.update({"description": JD, "company": "Acme"})
     resp = await client.post("/api/jobs", json=body)
     assert resp.status_code == 201, resp.text
@@ -62,8 +61,7 @@ async def make_job(client: AsyncClient) -> dict:
 
 
 async def make_agent(client: AsyncClient, job_id: str) -> dict:
-    draft = (await client.post("/api/agents/draft", json={"jobId": job_id})).json()
-    body = {k: v for k, v in draft.items() if k != "llmUsed"}
+    body = (await client.post("/api/agents/draft", json={"jobId": job_id})).json()
     body["jobId"] = job_id
     resp = await client.post("/api/agents", json=body)
     assert resp.status_code == 201, resp.text

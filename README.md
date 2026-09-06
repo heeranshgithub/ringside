@@ -224,7 +224,7 @@ All routes are under `/api` and speak camelCase JSON. Errors always look like
 ```
 backend/
   app/core            settings, base models (camelCase boundary), errors, db, deps
-  app/integrations    hunar (client + fake + webhook HMAC), people (apollo, pdl, mock), llm (OpenRouter + rule-based)
+  app/integrations    hunar (client + fake + webhook HMAC), people (apollo, pdl, mock), llm (OpenRouter, refusing null object)
   app/modules         jobs, agents, candidates, search, calls, webhooks, dashboard (router + service + schemas)
   app/workers         background call poller
   tests               offline test suite

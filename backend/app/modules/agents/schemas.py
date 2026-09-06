@@ -38,7 +38,6 @@ class AgentDraftDto(ApiModel):
     agent_prompt: str
     result_prompt: str
     result_schema: dict[str, Any]
-    llm_used: bool = False
 
 
 class DraftAgentRequest(StrictApiModel):
