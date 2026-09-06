@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from datetime import timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Header, status
 
 from app.core.deps import DbDep, HunarDep, SettingsDep
 from app.core.errors import ValidationFailed
-from app.core.models import utcnow
 from app.modules.dial import service
 from app.modules.dial.schemas import (
     ConfirmVerificationRequest,
@@ -42,12 +40,7 @@ async def capability(
     if not settings.client_dial_enabled:
         return DialCapabilityDto(enabled=False, reason=settings.client_dial_blocked_reason)
 
-    left: int | None = None
-    if x_session_id:
-        used = await db.dial_targets.count_documents(
-            {"session_id": x_session_id, "created_at": {"$gte": utcnow() - timedelta(days=1)}}
-        )
-        left = max(settings.dial_verify_per_session_per_day - used, 0)
+    left = await service.calls_left_today(db, settings, x_session_id)
     return DialCapabilityDto(enabled=True, reason=None, verify_calls_left_today=left)
 
 

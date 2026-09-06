@@ -155,7 +155,7 @@ export function DialTargetCard({ className }: { className?: string }) {
           hint={
             normalized.ok
               ? `We will call ${prettyPhone(normalized.value)}`
-              : "Indian mobile, with or without +91"
+              : "Indian mobile, with or without +91. Up to 3 calls per number per day."
           }
         >
           <Input
@@ -186,7 +186,11 @@ export function DialTargetCard({ className }: { className?: string }) {
           </Button>
           {capability.verifyCallsLeftToday !== null && (
             <span className="text-muted-foreground text-xs">
-              {capability.verifyCallsLeftToday} left today
+              {capability.verifyCallsLeftToday === 0
+                ? "No verification calls left today"
+                : `${capability.verifyCallsLeftToday} verification call${
+                    capability.verifyCallsLeftToday === 1 ? "" : "s"
+                  } left today`}
             </span>
           )}
         </div>

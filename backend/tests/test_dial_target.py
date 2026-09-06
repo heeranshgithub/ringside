@@ -10,7 +10,7 @@ from httpx import ASGITransport, AsyncClient
 from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
-from app.core.errors import ValidationFailed
+from app.core.errors import HunarApiError, ValidationFailed
 from app.core.phone import assert_dialable, mask, normalize_phone, pretty
 from app.integrations.hunar.client import FakeHunarClient
 from app.main import create_app
@@ -58,6 +58,13 @@ def test_undialable_indian_numbers_are_refused(number: str) -> None:
 
 def test_dialable_indian_mobile_passes() -> None:
     assert assert_dialable("+919876543210") == "+919876543210"
+
+
+@pytest.mark.parametrize("number", ["+14155550123", "+447700900123"])
+def test_numbers_outside_india_are_refused(number: str) -> None:
+    """The form promises Indian mobiles; an international call would surprise someone's bill."""
+    with pytest.raises(ValidationFailed, match=r"\+91"):
+        assert_dialable(number)
 
 
 def test_mask_and_pretty() -> None:
@@ -218,6 +225,65 @@ async def test_verification_calls_are_capped_per_number() -> None:
         )
         assert blocked.status_code == 429
         assert blocked.json()["error"]["code"] == "rate_limited"
+
+
+async def test_a_global_cap_bounds_the_day_across_every_number() -> None:
+    """The per-number and per-session caps both scale with how many numbers are used.
+
+    This is the only one that does not, so it is the real bound on a day's spend.
+    """
+    hunar = FakeHunarClient()
+    async with _client(hunar, dial_verify_global_per_day=2) as app_client:
+        for phone in ("9876543210", "9876543211"):
+            assert (
+                await app_client.post(
+                    "/api/dial-target/start", json={"phone": phone, "consent": True}
+                )
+            ).status_code == 201
+        # A third, untouched number: its own count is zero, and it is still refused.
+        blocked = await app_client.post(
+            "/api/dial-target/start", json={"phone": "9876543212", "consent": True}
+        )
+        assert blocked.status_code == 429
+        assert "today" in blocked.json()["error"]["message"]
+        assert len(hunar.calls) == 2
+
+
+async def test_the_counter_shows_the_limit_that_will_actually_stop_you() -> None:
+    """It is the lower of the caps, not the friendlier one.
+
+    A counter that says "4 left" and then refuses is worse than no counter at all.
+    """
+    hunar = FakeHunarClient()
+    async with _client(
+        hunar, dial_verify_global_per_day=2, dial_verify_per_session_per_day=5
+    ) as app_client:
+        assert (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"] == 2
+        await app_client.post(
+            "/api/dial-target/start", json={"phone": "9876543210", "consent": True}
+        )
+        assert (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"] == 1
+
+
+async def test_a_call_hunar_refuses_does_not_spend_a_slot() -> None:
+    """The row is written before the call, so a failed call must take it back.
+
+    Nobody heard a code, so nothing was verified and nothing should be charged against
+    the day's caps.
+    """
+    hunar = FakeHunarClient()
+
+    async def refuse(_: object) -> None:
+        raise HunarApiError(400, "mobile_number: Invalid phone number")
+
+    async with _client(hunar, dial_verify_global_per_day=2) as app_client:
+        hunar.create_call = refuse  # type: ignore[method-assign]
+        failed = await app_client.post(
+            "/api/dial-target/start", json={"phone": "9876543210", "consent": True}
+        )
+        assert failed.status_code >= 400
+        # The allowance is untouched, so the visitor can simply try again.
+        assert (await app_client.get("/api/dial-target")).json()["verifyCallsLeftToday"] == 2
 
 
 async def test_the_flow_is_closed_when_the_flag_is_off() -> None:

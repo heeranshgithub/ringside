@@ -104,8 +104,37 @@ async def _verify_agent_id(db: Db, hunar: HunarClient) -> str:
     return agent.id
 
 
-async def _assert_within_limits(db: Db, settings: Settings, phone: str, session_id: str) -> None:
+async def calls_left_today(db: Db, settings: Settings, session_id: str | None) -> int:
+    """The binding allowance: the lowest of the limits that do not depend on the phone typed.
+
+    Shown in the UI, so it must never promise more than the next request would actually
+    allow. The per-number rule is deliberately excluded: it depends on a number the visitor
+    has not entered yet, and quoting it would need a lookup on every keystroke. The form
+    states that rule in words instead.
+    """
     since = utcnow() - timedelta(days=1)
+    used_globally = await db.dial_targets.count_documents({"created_at": {"$gte": since}})
+    left = max(settings.dial_verify_global_per_day - used_globally, 0)
+    if session_id:
+        used = await db.dial_targets.count_documents(
+            {"session_id": session_id, "created_at": {"$gte": since}}
+        )
+        left = min(left, max(settings.dial_verify_per_session_per_day - used, 0))
+    return left
+
+
+async def _assert_within_limits(db: Db, settings: Settings, phone: str, session_id: str) -> None:
+    """Three caps, broadest first, so the refusal names the one that will still apply.
+
+    Checking the number first would say "try another number" when the whole demo is at
+    capacity and no other number would work either.
+    """
+    since = utcnow() - timedelta(days=1)
+    used_globally = await db.dial_targets.count_documents({"created_at": {"$gte": since}})
+    if used_globally >= settings.dial_verify_global_per_day:
+        raise RateLimited(
+            "This demo has placed all of today's verification calls. Try again tomorrow."
+        )
     per_number = await db.dial_targets.count_documents(
         {"phone": phone, "created_at": {"$gte": since}}
     )
@@ -156,18 +185,27 @@ async def start_verification(
     await db.dial_targets.insert_one(doc)
 
     # The one call in the product that reaches a number nobody has vouched for yet.
-    agent_id = await _verify_agent_id(db, hunar)
-    created = await hunar.create_call(
-        HunarCallCreate(
-            agent_id=agent_id,
-            callee_name="Ringside verification",
-            mobile_number=phone,
-            custom_data={"code": " ".join(code)},
-            request_id=f"verify-{doc['_id'][:8]}",
-            timezone=settings.hunar_timezone,
-            guardrails=WIDEST_WINDOW,
+    #
+    # The row is written before the call so the code exists if the callback beats us back,
+    # which means a call Hunar refuses would otherwise leave a row that spends a slot against
+    # the daily caps. Nobody heard a code, so it is not a verification; drop it and let the
+    # visitor try again.
+    try:
+        agent_id = await _verify_agent_id(db, hunar)
+        created = await hunar.create_call(
+            HunarCallCreate(
+                agent_id=agent_id,
+                callee_name="Ringside verification",
+                mobile_number=phone,
+                custom_data={"code": " ".join(code)},
+                request_id=f"verify-{doc['_id'][:8]}",
+                timezone=settings.hunar_timezone,
+                guardrails=WIDEST_WINDOW,
+            )
         )
-    )
+    except Exception:
+        await db.dial_targets.delete_one({"_id": doc["_id"]})
+        raise
     await db.dial_targets.update_one({"_id": doc["_id"]}, {"$set": {"hunar_call_id": created.id}})
     await audit(
         db,

@@ -54,12 +54,15 @@ def assert_dialable(number: str) -> str:
 
     Everything `normalize_phone` accepts can be stored; only what passes here gets called.
     """
-    national = number[3:] if number.startswith("+91") else number.lstrip("+")
+    if not number.startswith("+91"):
+        # The UI offers Indian mobiles and the demo dials one country; anything else would be
+        # a surprise on someone's bill, so the code agrees with the copy rather than guessing.
+        raise ValidationFailed("This demo dials Indian mobile numbers only (+91)")
 
-    if len(set(national)) == 1:
+    if len(set(number[3:])) == 1:
         raise ValidationFailed("That number is a single repeated digit")
 
-    if number.startswith("+91") and not INDIA_MOBILE.match(number):
+    if not INDIA_MOBILE.match(number):
         raise ValidationFailed("Indian mobile numbers are ten digits starting with 6, 7, 8 or 9")
     return number
 

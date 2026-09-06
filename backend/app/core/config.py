@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     allow_client_dial_target: bool = False
     dial_verify_per_number_per_day: int = 3
     dial_verify_per_session_per_day: int = 5
+    # The only cap that does not scale with the number of phones or browsers involved.
+    dial_verify_global_per_day: int = 10
     dial_target_ttl_hours: int = 12
     dial_code_ttl_minutes: int = 10
     dial_code_max_attempts: int = 5
