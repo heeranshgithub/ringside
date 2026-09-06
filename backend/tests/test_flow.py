@@ -234,6 +234,18 @@ async def test_webhook_updates_call(client: AsyncClient, hunar: FakeHunarClient)
     assert bad.json()["signatureValid"] is False
 
 
+async def test_a_second_agent_with_the_same_name_is_numbered(client: AsyncClient) -> None:
+    """Every demo visitor drafts from the same sample JD, and the draft names the agent
+    after the job. Two identical names in the attach-existing picker cannot be told apart,
+    so the second one is numbered before it is created on Hunar."""
+    job = await make_job(client)
+    first = await make_agent(client, job["id"])
+    second = await make_agent(client, job["id"])
+    third = await make_agent(client, job["id"])
+    assert second["name"] == f"{first['name']} (2)"
+    assert third["name"] == f"{first['name']} (3)"
+
+
 async def test_agent_update_and_import(client: AsyncClient, hunar: FakeHunarClient) -> None:
     job = await make_job(client)
     agent = await make_agent(client, job["id"])

@@ -81,13 +81,36 @@ def _mirror(
     }
 
 
+async def unique_agent_name(db: Db, wanted: str) -> str:
+    """The name, or the name numbered so it does not collide with an agent already here.
+
+    Every demo visitor drafts from the same sample JD, and the draft names the agent after
+    the job, so without this the attach-existing picker fills with identical entries nobody
+    can tell apart. The number is added before the agent reaches Hunar, so both sides agree
+    on it. The base is trimmed so a 64-character name still fits its suffix.
+    """
+    limit = 64
+    base = wanted[: limit - len(" (99)")].rstrip()
+    taken = {
+        d["name"]
+        async for d in db.agents.find({"name": {"$regex": f"^{re.escape(base)}"}}, {"name": 1})
+    }
+    if wanted not in taken:
+        return wanted
+    n = 2
+    while f"{base} ({n})" in taken:
+        n += 1
+    return f"{base} ({n})"
+
+
 async def create_agent(db: Db, hunar: HunarClient, body: CreateAgentRequest) -> AgentDto:
     _validate_choices(body.language, body.voice_persona)
     if body.job_id:
         await get_job_doc(db, body.job_id)
+    name = await unique_agent_name(db, body.name)
     created = await hunar.create_agent(
         HunarAgentCreate(
-            name=body.name,
+            name=name,
             language=body.language,
             voice_persona=body.voice_persona,
             persona_name=body.persona_name or body.voice_persona.title(),
