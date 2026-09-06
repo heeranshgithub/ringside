@@ -5,6 +5,7 @@ from fastapi import APIRouter, status
 from app.core.deps import ContainerDep
 from app.core.errors import FeatureDisabled
 from app.integrations.people.base import PersonResult, SearchCriteria
+from app.integrations.people.pdl import PdlProvider
 from app.modules.candidates import service as candidates
 from app.modules.candidates.schemas import CandidateDto
 from app.modules.search.schemas import (
@@ -44,8 +45,17 @@ _LABELS = {
 async def providers(c: ContainerDep) -> list[ProviderInfoDto]:
     out = []
     for name, (label, note) in _LABELS.items():
+        provider = c.providers.get(name)
+        # The sandbox returns synthetic people. Say so where the recruiter picks the source,
+        # or a demo run against it looks like a real search that found fake candidates.
+        if isinstance(provider, PdlProvider) and provider.sandbox:
+            label = f"{label} (sandbox)"
+            note = (
+                "Synthetic records with the live schema, at zero credits. "
+                "Set PDL_SANDBOX=false for real people."
+            )
         out.append(
-            ProviderInfoDto(name=name, configured=name in c.providers, label=label, note=note)
+            ProviderInfoDto(name=name, configured=provider is not None, label=label, note=note)
         )
     return out
 

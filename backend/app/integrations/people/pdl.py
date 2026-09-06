@@ -92,6 +92,14 @@ class PdlProvider:
             raise PeopleProviderError(f"PDL request failed: {exc}") from exc
         if resp.status_code == 404:  # PDL uses 404 for "no matches"
             return []
+        if resp.status_code == 402:
+            # PDL bills 1 credit per record returned, so a single search at size 50 can empty
+            # the monthly 100. Name the fix rather than relaying a bare 402.
+            raise PeopleProviderError(
+                "People Data Labs has no credits left this month. Use the demo dataset, "
+                "or set PDL_SANDBOX=true for synthetic records at zero cost.",
+                details={"upstreamStatus": 402},
+            )
         if resp.status_code >= 400:
             log.warning("pdl_error", status=resp.status_code, body=resp.text[:300])
             raise PeopleProviderError(
