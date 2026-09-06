@@ -75,9 +75,7 @@ export function CallDetailBody({ call }: { call: Call }) {
         <StatusBadge status={call.status} />
         <StatusBadge status={call.engagementStatus} />
         {call.safeDial && (
-          <span className="rounded-full bg-emerald-500/10 px-2 text-xs text-emerald-700 dark:text-emerald-300">
-            safe dial
-          </span>
+          <span className="bg-done-bg text-done rounded-full px-2 text-xs">safe dial</span>
         )}
         <div className="ml-auto flex gap-1.5">
           <Button
@@ -213,13 +211,21 @@ export function CallDetailBody({ call }: { call: Call }) {
       <Section title="Timeline">
         <ol className="space-y-1.5 text-xs">
           {call.events.map((e, i) => (
-            <li key={i} className="flex items-center gap-2">
-              <span className="text-muted-foreground w-28 shrink-0 tabular-nums">
-                {formatDateTime(e.at)}
+            /*
+              A grid, not a flex row. As flex, `ml-auto` on the source pushed it to the edge and
+              squeezed the kind until a long one ("Call Summary") wrapped; `items-center` then
+              centred the timestamp and source against the taller row, so that one line sat out
+              of step with every other. Real columns give the kind its own track instead of
+              leftovers, and baseline alignment keeps the first line of each cell on one line
+              even if something does wrap.
+            */
+            <li key={i} className="grid grid-cols-[7rem_1fr_auto] items-baseline gap-x-2 gap-y-1">
+              <span className="text-muted-foreground tabular-nums">{formatDateTime(e.at)}</span>
+              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="font-medium">{titleCase(e.kind)}</span>
+                {e.status && <StatusBadge status={e.status} />}
               </span>
-              <span className="font-medium">{titleCase(e.kind)}</span>
-              {e.status && <StatusBadge status={e.status} />}
-              <span className="text-muted-foreground ml-auto">{e.source}</span>
+              <span className="text-muted-foreground text-right">{e.source}</span>
             </li>
           ))}
         </ol>
