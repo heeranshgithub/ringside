@@ -8,7 +8,13 @@ from httpx import AsyncClient
 
 from app.integrations.hunar.client import FakeHunarClient
 from app.integrations.hunar.webhook import compute_signature
-from tests.conftest import TEST_KEY, make_agent, make_candidate, make_job
+from tests.conftest import (
+    TEST_KEY,
+    make_agent,
+    make_candidate,
+    make_job,
+    verify_dial_target,
+)
 
 
 async def test_parse_job_returns_criteria(client: AsyncClient) -> None:
@@ -43,6 +49,9 @@ async def test_job_agent_candidate_call_roundtrip(
     cand = await make_candidate(client, job["id"])
     assert cand["phone"] == "+919876543210"
 
+    # Safe dial needs a destination somebody proved is theirs; there is no server-side default.
+    mine = await verify_dial_target(client, hunar, "99999 00000")
+
     launch = await client.post(
         "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
     )
@@ -51,7 +60,7 @@ async def test_job_agent_candidate_call_roundtrip(
     assert body["skipped"] == []
     call = body["calls"][0]
     assert call["safeDial"] is True
-    assert call["dialedNumber"] == "+919999900000"
+    assert call["dialedNumber"] == mine
     assert call["targetNumber"] == "+919876543210"
     assert call["customData"]["candidate_name"] == "Ananya Iyer"
     assert call["customData"]["company"] == "Acme"
@@ -74,6 +83,39 @@ async def test_job_agent_candidate_call_roundtrip(
 
     summary = (await client.get("/api/dashboard/summary")).json()
     assert summary["callsTotal"] == 1 and summary["engaged"] == 1
+
+
+async def test_launch_without_a_verified_number_skips_and_says_why(
+    client: AsyncClient, hunar: FakeHunarClient
+) -> None:
+    """The session target is what a launch dials, so the route must actually read it.
+
+    It did not, for a while: `launch` never passed `verified_target`, and an operator-configured
+    test number underneath meant every call still went somewhere. The fallback is gone, so the
+    omission is now visible instead of silent.
+    """
+    job = await make_job(client)
+    await make_agent(client, job["id"])
+    cand = await make_candidate(client, job["id"])
+
+    body = (
+        await client.post(
+            "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+        )
+    ).json()
+    assert body["calls"] == []
+    assert "Verify your own number" in body["skipped"][0]["reason"]
+    assert hunar.calls == {}, "nothing was dialled"
+
+    # And once a number is proved, the same launch reaches it.
+    mine = await verify_dial_target(client, hunar)
+    body = (
+        await client.post(
+            "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+        )
+    ).json()
+    assert body["skipped"] == []
+    assert body["calls"][0]["dialedNumber"] == mine
 
 
 async def test_launch_skips_candidates_without_agent(client: AsyncClient) -> None:
@@ -154,6 +196,7 @@ async def test_webhook_updates_call(client: AsyncClient, hunar: FakeHunarClient)
     job = await make_job(client)
     await make_agent(client, job["id"])
     cand = await make_candidate(client, job["id"])
+    await verify_dial_target(client, hunar)
     call = (
         await client.post(
             "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}

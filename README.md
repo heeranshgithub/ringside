@@ -36,7 +36,7 @@ Key design decisions:
 - **Safe dial.** The Hunar key is a shared org key and the search providers return real people, so the set
   of reachable numbers is decided by the server, never by the browser. A call resolves to one of three, in order:
   the candidate's own number (only when `SAFE_DIAL_MODE=false` **and** that candidate was cleared in the UI),
-  a number the visitor proved is theirs, or `TEST_PHONE_NUMBERS[0]`. The agent still uses the candidate's real
+  a number the visitor proved is theirs by answering a verification call. The agent still uses the candidate's real
   name, role and company, so the demo is realistic without cold-calling strangers.
 - **Bring your own phone.** With `ALLOW_CLIENT_DIAL_TARGET=true`, a visitor can nominate their own number and
   hear the agent themselves. Ownership is proved by a call rather than a claim: the agent rings the number once,
@@ -123,7 +123,7 @@ Prerequisites: Node ≥ 20 with pnpm ≥ 10, Python ≥ 3.12 with [uv](https://d
 ```bash
 # backend
 cd backend
-cp .env.example .env            # fill HUNAR_API_KEY and TEST_PHONE_NUMBERS; the rest are optional
+cp .env.example .env            # fill HUNAR_API_KEY and APP_ACCESS_CODE; the rest are optional
 uv sync
 uv run uvicorn app.main:app --reload --port 8000
 
@@ -154,7 +154,7 @@ See `backend/.env.example` for the full list. The ones that matter:
 | Variable | Purpose |
 |----------|---------|
 | `HUNAR_API_KEY` | Hunar Voice Agents key. Also the HMAC secret for webhooks. |
-| `TEST_PHONE_NUMBERS` | Comma-separated E.164 numbers. The first one receives every safe-dial call. |
+| `ALLOW_CLIENT_DIAL_TARGET` | Lets a visitor nominate their own phone, proven by a verification call. This is the only way a safe-dialled call gets a destination; it refuses to arm without `APP_ACCESS_CODE`. |
 | `SAFE_DIAL_MODE` | `true` (default) routes all calls to the test number. |
 | `PUBLIC_BASE_URL` | Public HTTPS URL of the backend. When set, calls are created with webhook callbacks. |
 | `MONGODB_URI`, `MONGODB_DB` | MongoDB connection. |

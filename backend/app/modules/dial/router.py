@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Annotated
+from fastapi import APIRouter, status
 
-from fastapi import APIRouter, Header, status
-
-from app.core.deps import DbDep, HunarDep, SettingsDep
+from app.core.deps import DbDep, HunarDep, SessionId, SettingsDep
 from app.core.errors import ValidationFailed
 from app.modules.dial import service
 from app.modules.dial.schemas import (
@@ -15,8 +13,6 @@ from app.modules.dial.schemas import (
 )
 
 router = APIRouter(prefix="/dial-target", tags=["dial"])
-
-SessionId = Annotated[str | None, Header(alias="X-Session-Id")]
 
 
 def _session(session_id: str | None) -> str:

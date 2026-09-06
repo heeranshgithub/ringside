@@ -23,6 +23,7 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { RingsideLogo } from "@/components/logo";
 import { useTheme, type ThemeChoice } from "@/components/theme";
 import { useGetConfigQuery } from "@/features/calls/api";
+import { useGetDialTargetQuery } from "@/features/dial/api";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -106,6 +107,7 @@ function ThemeToggle() {
 
 function SafeDialPill() {
   const { data } = useGetConfigQuery();
+  const { data: target } = useGetDialTargetQuery();
   if (!data) return null;
   const safe = data.safeDialMode;
   return (
@@ -116,7 +118,7 @@ function SafeDialPill() {
       )}
       title={
         safe
-          ? "Every call is routed to the configured test number."
+          ? "Every call goes to the number you verified in this browser."
           : "Cleared candidates will be dialled on their real number."
       }
     >
@@ -127,7 +129,7 @@ function SafeDialPill() {
       )}
       <span className="font-medium">{safe ? "Safe dial" : "Real dialling"}</span>
       <span className="text-muted-foreground ml-auto truncate font-mono text-[10px]">
-        {data.testPhoneNumbersMasked[0] ?? "not set"}
+        {target?.verified ? target.phoneMasked : "no number yet"}
       </span>
     </div>
   );

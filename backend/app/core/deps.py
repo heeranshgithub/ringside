@@ -61,6 +61,10 @@ HunarDep = Annotated[HunarClient, Depends(get_hunar)]
 LlmDep = Annotated[LlmService, Depends(get_llm)]
 EventsDep = Annotated[EventBus, Depends(get_events)]
 
+#: The browser identifies itself so a verified number stays scoped to one visitor. Not an
+#: identity claim: it decides which number *this* browser may ring, never who anyone is.
+SessionId = Annotated[str | None, Header(alias="X-Session-Id")]
+
 
 async def require_access(
     c: ContainerDep,

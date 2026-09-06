@@ -42,7 +42,6 @@ class ConfigDto(ApiModel):
     env: str
     capabilities: list[CapabilityDto] = Field(default_factory=list)
     safe_dial_mode: bool
-    test_phone_numbers_masked: list[str]
     hunar_enabled: bool
     llm_enabled: bool
     llm_model: str
@@ -52,10 +51,6 @@ class ConfigDto(ApiModel):
     providers: list[str]
     access_code_required: bool
     client_dial_enabled: bool
-
-
-def _mask(phone: str) -> str:
-    return phone[:3] + "•" * max(0, len(phone) - 6) + phone[-3:] if len(phone) > 6 else "•••"
 
 
 def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
@@ -86,13 +81,24 @@ def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
         CapabilityDto(
             key="dialling",
             label="Safe dial target",
-            state="ok" if s.test_phone_numbers else "missing",
+            # Reports whether the mechanism is available, not whether this visitor has used it:
+            # the target is per browser and this response is not.
+            state="ok" if s.client_dial_enabled else "missing",
             detail=(
-                "Every call is routed to the verified test number."
-                if s.test_phone_numbers
-                else "No test number, so every call launch will be skipped."
+                "Each visitor verifies their own number, and that is the only phone we ring."
+                if s.client_dial_enabled
+                else (
+                    s.client_dial_blocked_reason
+                    or "Nobody can nominate a number, so every call launch will be refused."
+                )
             ),
-            env_var=None if s.test_phone_numbers else "TEST_PHONE_NUMBERS",
+            env_var=(
+                None
+                if s.client_dial_enabled
+                else "APP_ACCESS_CODE"
+                if s.allow_client_dial_target
+                else "ALLOW_CLIENT_DIAL_TARGET"
+            ),
         ),
         CapabilityDto(
             key="people_search",
@@ -126,7 +132,6 @@ async def config(c: ContainerDep) -> ConfigDto:
     return ConfigDto(
         env=s.env,
         safe_dial_mode=s.safe_dial_mode,
-        test_phone_numbers_masked=[_mask(p) for p in s.test_phone_numbers],
         hunar_enabled=s.hunar_enabled,
         llm_enabled=c.llm.enabled,
         llm_model=s.llm_model if c.llm.enabled else "not configured",

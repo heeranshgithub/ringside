@@ -53,15 +53,10 @@ export default function SettingsPage() {
               label="Safe-dial mode"
               value={
                 data.safeDialMode
-                  ? "On (all calls go to the test number)"
+                  ? "On (every call goes to a number you verified below)"
                   : "Off (cleared candidates are dialled for real)"
               }
               ok={data.safeDialMode}
-            />
-            <Row
-              label="Test numbers"
-              value={data.testPhoneNumbersMasked.join(", ") || "none configured"}
-              ok={data.testPhoneNumbersMasked.length > 0}
             />
             <Row label="Environment" value={data.env} />
             <DialTargetCard className="mt-3" />

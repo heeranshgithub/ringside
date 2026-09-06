@@ -133,8 +133,11 @@ export function LaunchCallsDialog({
                 <>
                   <span className="font-medium">Real dialling is enabled.</span> {clearedCount} of{" "}
                   {candidates.length} selected candidates are cleared and will be called on their
-                  own number. The rest go to the test number{" "}
-                  {config?.testPhoneNumbersMasked[0] ?? "(none configured)"}.
+                  own number. The rest go to{" "}
+                  {dialTarget?.verified
+                    ? `your verified number ${dialTarget.phonePretty}`
+                    : "nobody, because no number has been verified in this browser yet"}
+                  .
                 </>
               ) : (
                 <>
@@ -144,8 +147,7 @@ export function LaunchCallsDialog({
                       your verified number {dialTarget.phonePretty}
                     </span>
                   ) : (
-                    (config?.testPhoneNumbersMasked[0] ??
-                    "no number yet, so every call will be skipped")
+                    "no number yet, so every call will be skipped — verify yours below"
                   )}
                   ; the candidate&apos;s own number is never dialled. The agent still uses the
                   candidate&apos;s name and role.

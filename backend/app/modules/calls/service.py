@@ -52,14 +52,17 @@ def resolve_dial_number(
 ) -> tuple[str, bool, str]:
     """Decide what actually rings. Returns (number, is_safe_dial, source).
 
-    Three ways a number becomes reachable, in order of precedence:
+    Two ways a number becomes reachable, in order of precedence:
 
       real     the candidate's own number, only when safe dial is off globally AND that
                candidate was explicitly cleared in the UI
       session  a number this visitor proved is theirs by answering a verification call
-      env      TEST_PHONE_NUMBERS, the operator's own device
 
-    A browser can influence only the middle one, and only after the verification call.
+    There is deliberately no third way. An operator-configured test number used to sit
+    underneath these as a fallback, which meant the deployment had a privileged destination
+    nobody had proved, and the demo worked for whoever set the variable and silently skipped
+    for everyone else. Now the only phone a safe-dialled call can reach belongs to the person
+    who asked for it.
     """
     real_allowed = (not settings.safe_dial_mode) and bool(candidate.get("allow_real_dial"))
     if real_allowed:
@@ -70,12 +73,10 @@ def resolve_dial_number(
     if verified_target:
         return verified_target, True, "session"
 
-    if not settings.test_phone_numbers:
-        raise ValidationFailed(
-            "Safe dial is on but no number is available. Verify your own number, or set "
-            "TEST_PHONE_NUMBERS on the server."
-        )
-    return settings.test_phone_numbers[0], True, "env"
+    raise ValidationFailed(
+        "Verify your own number first — safe dial only rings a phone someone has proved "
+        "is theirs, and the candidate's own number is never used."
+    )
 
 
 def build_custom_data(

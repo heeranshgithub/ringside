@@ -27,7 +27,9 @@ async def app_client(s: Settings) -> AsyncIterator[AsyncClient]:
     app = create_app(s, db=AsyncMongoMockClient()["t"])
     async with app.router.lifespan_context(app):
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as c:
+        # Setting an access code also gates /api, so carry it or every read is a 401.
+        headers = {"X-Access-Code": s.app_access_code} if s.app_access_code else {}
+        async with AsyncClient(transport=transport, base_url="http://test", headers=headers) as c:
             yield c
 
 
@@ -98,7 +100,7 @@ class TestCapabilityReport:
             ({}, "llm", "missing"),
             ({"openrouter_api_key": "x"}, "llm", "ok"),
             ({}, "dialling", "missing"),
-            ({"test_phone_numbers": "+919999900000"}, "dialling", "ok"),
+            ({"app_access_code": "shh"}, "dialling", "ok"),
             ({}, "people_search", "degraded"),
             ({"pdl_api_key": "x"}, "people_search", "ok"),
             ({}, "webhooks", "degraded"),
@@ -119,7 +121,8 @@ class TestCapabilityReport:
             missing = {c["key"]: c["envVar"] for c in caps if c["state"] == "missing"}
             assert missing["hunar"] == "HUNAR_API_KEY"
             assert missing["llm"] == "OPENROUTER_API_KEY"
-            assert missing["dialling"] == "TEST_PHONE_NUMBERS"
+            # No number can be nominated without a gate, so that is the thing to set.
+            assert missing["dialling"] == "APP_ACCESS_CODE"
 
 
 class TestRuntimeFailuresAreNamed:

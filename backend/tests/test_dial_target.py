@@ -86,20 +86,14 @@ def _settings(**kw: object) -> Settings:
         "env": "test",
         "mongodb_uri": "mongodb://unused",
         "hunar_api_key": "k",
-        "test_phone_numbers": "+919999900000",
         "app_access_code": "",
-        "allow_client_dial_target": False,
+        "allow_client_dial_target": True,
         "safe_dial_mode": True,
     }
     return Settings(_env_file=None, **{**base, **kw})  # type: ignore[arg-type]
 
 
-def test_safe_dial_uses_the_server_number_by_default() -> None:
-    number, safe, source = resolve_dial_number({"phone": "+919876543210"}, _settings())
-    assert (number, safe, source) == ("+919999900000", True, "env")
-
-
-def test_a_verified_session_number_wins_over_the_server_one() -> None:
+def test_a_verified_session_number_is_the_only_safe_dial_destination() -> None:
     number, safe, source = resolve_dial_number(
         {"phone": "+919876543210"}, _settings(), verified_target="+918888800000"
     )
@@ -107,10 +101,13 @@ def test_a_verified_session_number_wins_over_the_server_one() -> None:
 
 
 def test_the_candidates_own_number_is_never_reached_while_safe_dial_is_on() -> None:
+    """Even a cleared candidate: the flag alone does nothing while safe dial is on."""
     number, _, source = resolve_dial_number(
-        {"phone": "+919876543210", "allow_real_dial": True}, _settings()
+        {"phone": "+919876543210", "allow_real_dial": True},
+        _settings(),
+        verified_target="+918888800000",
     )
-    assert number == "+919999900000" and source == "env"
+    assert number == "+918888800000" and source == "session"
 
 
 def test_real_dialling_needs_both_the_global_switch_and_the_candidate_flag() -> None:
@@ -120,13 +117,22 @@ def test_real_dialling_needs_both_the_global_switch_and_the_candidate_flag() -> 
     )
     assert (number, safe, source) == ("+919876543210", False, "real")
 
-    number, safe, source = resolve_dial_number({"phone": "+919876543210"}, off)
-    assert source == "env" and safe is True
+    # Same settings, uncleared candidate: it falls back to safe dial, not to the real number.
+    number, safe, source = resolve_dial_number(
+        {"phone": "+919876543210"}, off, verified_target="+918888800000"
+    )
+    assert (number, safe, source) == ("+918888800000", True, "session")
 
 
-def test_no_number_anywhere_is_an_error_not_a_silent_call() -> None:
-    with pytest.raises(ValidationFailed):
-        resolve_dial_number({"phone": "+919876543210"}, _settings(test_phone_numbers=""))
+def test_without_a_verified_number_nothing_is_dialled_at_all() -> None:
+    """There is no server-side fallback to quietly ring instead."""
+    with pytest.raises(ValidationFailed, match="Verify your own number"):
+        resolve_dial_number({"phone": "+919876543210"}, _settings())
+
+    with pytest.raises(ValidationFailed, match="Verify your own number"):
+        resolve_dial_number(
+            {"phone": "+919876543210", "allow_real_dial": True}, _settings(safe_dial_mode=True)
+        )
 
 
 # ---------- the feature refuses to arm itself unsafely ----------

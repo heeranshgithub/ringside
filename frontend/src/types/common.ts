@@ -27,7 +27,6 @@ export interface AppConfig {
   /** Added after the first release: an older backend will not send it. */
   capabilities?: Capability[];
   safeDialMode: boolean;
-  testPhoneNumbersMasked: string[];
   hunarEnabled: boolean;
   llmEnabled: boolean;
   llmModel: string;

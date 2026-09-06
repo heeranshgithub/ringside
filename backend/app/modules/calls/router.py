@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, status
 
-from app.core.deps import DbDep, EventsDep, HunarDep, LlmDep, SettingsDep
+from app.core.deps import DbDep, EventsDep, HunarDep, LlmDep, SessionId, SettingsDep
 from app.core.pagination import Page
 from app.modules.calls import service
 from app.modules.calls.schemas import (
@@ -13,6 +13,7 @@ from app.modules.calls.schemas import (
     LaunchCallsResponse,
     SyncAllResponse,
 )
+from app.modules.dial import service as dial_service
 
 router = APIRouter(prefix="/calls", tags=["calls"])
 
@@ -38,9 +39,19 @@ async def list_calls(
 
 @router.post("/launch", response_model=LaunchCallsResponse, status_code=status.HTTP_201_CREATED)
 async def launch(
-    body: LaunchCallsRequest, db: DbDep, hunar: HunarDep, settings: SettingsDep
+    body: LaunchCallsRequest,
+    db: DbDep,
+    hunar: HunarDep,
+    settings: SettingsDep,
+    x_session_id: SessionId = None,
 ) -> LaunchCallsResponse:
-    return await service.launch_calls(db, hunar, settings, body)
+    # Safe dial has no server-side number behind it, so the destination is whatever this
+    # browser proved is its own. Without this lookup the whole verification flow would be
+    # decorative: every launch would refuse.
+    target = await dial_service.current_target(db, x_session_id) if x_session_id else None
+    return await service.launch_calls(
+        db, hunar, settings, body, verified_target=target["phone"] if target else None
+    )
 
 
 @router.post("/sync", response_model=SyncAllResponse)

@@ -85,13 +85,11 @@ def test_settings_split_and_redact() -> None:
     s = Settings(
         env="test",
         cors_origins="http://a,http://b",
-        test_phone_numbers="+911, +912",  # type: ignore[call-arg]
         hunar_api_key="secret",
         mongodb_uri="mongodb://x",
         app_access_code="8jvp-en5c-madr",
     )
     assert s.cors_origins == ["http://a", "http://b"]
-    assert s.test_phone_numbers == ["+911", "+912"]
     red = s.redact()
     assert red["hunar_api_key"] == "***" and red["mongodb_uri"] == "***"
     # The startup log prints this dict; the demo gate must not be readable from CloudWatch.

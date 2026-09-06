@@ -33,14 +33,14 @@ class Settings(BaseSettings):
     hunar_base_url: str = "https://api.voice.hunar.ai/external/v1"
     hunar_timezone: str = "Asia/Kolkata"
 
-    # Safe dial: route every outbound call to a verified test number.
+    # Safe dial: never ring a candidate; ring a number someone proved they hold.
     safe_dial_mode: bool = True
-    test_phone_numbers_raw: str = Field(default="", validation_alias="test_phone_numbers")
 
-    # Let a visitor nominate their own phone as this session's safe-dial target, proven by a
-    # short verification call. Off by default: with it on, the app will ring a number a
-    # browser supplied, so it must never switch on by accident.
-    allow_client_dial_target: bool = False
+    # A visitor nominates their own phone by answering a short verification call. This is the
+    # only way a safe-dialled call gets a destination — there is no server-side test number to
+    # fall back on, so the person hearing the agent is always the person who asked for it.
+    # On by default, but `client_dial_enabled` still refuses to arm without an access code.
+    allow_client_dial_target: bool = True
     dial_verify_per_number_per_day: int = 3
     dial_verify_per_session_per_day: int = 5
     # The only cap that does not scale with the number of phones or browsers involved.
@@ -74,11 +74,6 @@ class Settings(BaseSettings):
         # Starlette matches the Origin header exactly, so a trailing slash pasted from a
         # browser bar would silently disable CORS for that origin.
         return [o.strip().rstrip("/") for o in self.cors_origins_raw.split(",") if o.strip()]
-
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def test_phone_numbers(self) -> list[str]:
-        return [p.strip() for p in self.test_phone_numbers_raw.split(",") if p.strip()]
 
     @property
     def llm_enabled(self) -> bool:
