@@ -154,15 +154,26 @@ export function CallDetailBody({ call }: { call: Call }) {
             {terminal ? "No assessment yet." : "Available once the call completes."}
           </p>
         )}
-        <Button
-          size="sm"
-          variant="outline"
-          disabled={assessState.isLoading || resultEntries.length === 0}
-          onClick={() => run(() => assess(call.id).unwrap(), "Assessment updated")}
-        >
-          <Sparkles data-icon="inline-start" />
-          {call.assessment ? "Re-assess" : "Assess"}
-        </Button>
+        {/*
+          Scoring happens on its own once Hunar returns a usable result, so this button is only for
+          the call that has none: a result too empty to score, or a scoring run that failed. There is
+          deliberately no re-assess. Nothing the score depends on changes after the call, and
+          re-running at temperature 0.2 only moves the number for no reason a recruiter can see.
+        */}
+        {!call.assessment && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={assessState.isLoading || resultEntries.length === 0}
+            onClick={() => run(() => assess(call.id).unwrap(), "Assessment updated")}
+          >
+            <Sparkles
+              data-icon="inline-start"
+              className={assessState.isLoading ? "animate-pulse" : ""}
+            />
+            {assessState.isLoading ? "Assessing…" : "Assess"}
+          </Button>
+        )}
       </Section>
 
       <Section title="Structured answers">
