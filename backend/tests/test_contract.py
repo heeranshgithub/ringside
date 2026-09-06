@@ -87,7 +87,7 @@ def test_settings_split_and_redact() -> None:
         cors_origins="http://a,http://b",
         hunar_api_key="secret",
         mongodb_uri="mongodb://x",
-        app_access_code="8jvp-en5c-madr",
+        app_access_code="not-the-real-code",
     )
     assert s.cors_origins == ["http://a", "http://b"]
     red = s.redact()
