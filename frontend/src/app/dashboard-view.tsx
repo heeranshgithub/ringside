@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BriefcaseBusiness, PhoneCall, RefreshCw, Search, Users } from "lucide-react";
+import { ArrowRight, BriefcaseBusiness, PhoneCall, Search, Users } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +11,9 @@ import { CallsTable } from "@/components/calls/calls-table";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, PageSkeleton } from "@/components/states";
 import { StatusBadge } from "@/components/status-badge";
-import { useGetDashboardQuery, useSyncAllCallsMutation } from "@/features/calls/api";
+import { useGetDashboardQuery } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
 import { useLiveInterval } from "@/features/live/live-provider";
-import { getErrorMessage } from "@/lib/errors";
 import { formatDuration, titleCase } from "@/lib/format";
 
 function Stat({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
@@ -36,7 +34,6 @@ export function DashboardView() {
     pollingInterval: dashboardPoll,
   });
   const { data: jobs } = useGetJobsQuery();
-  const [syncAll, syncState] = useSyncAllCallsMutation();
   const [selected, setSelected] = useState<string | null>(null);
 
   if (isLoading) return <PageSkeleton />;
@@ -51,31 +48,10 @@ export function DashboardView() {
         title="Dashboard"
         description="Screen candidates and reach out to sourced talent with Hunar voice agents. Answers land here as structured data."
         actions={
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={syncState.isLoading}
-              onClick={async () => {
-                try {
-                  const r = await syncAll().unwrap();
-                  toast.success(`Synced ${r.synced} call${r.synced === 1 ? "" : "s"}`);
-                } catch (e) {
-                  toast.error(getErrorMessage(e as never));
-                }
-              }}
-            >
-              <RefreshCw
-                data-icon="inline-start"
-                className={syncState.isLoading ? "animate-spin" : ""}
-              />
-              Sync pending
-            </Button>
-            <Button size="sm" nativeButton={false} render={<Link href="/jobs/new" />}>
-              New job
-              <ArrowRight data-icon="inline-end" />
-            </Button>
-          </>
+          <Button size="sm" nativeButton={false} render={<Link href="/jobs/new" />}>
+            New job
+            <ArrowRight data-icon="inline-end" />
+          </Button>
         }
       />
 
