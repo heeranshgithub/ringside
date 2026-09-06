@@ -247,6 +247,63 @@ _SEED: list[dict] = [
         "skills": ["telecalling", "hindi", "english", "crm"],
         "yrs": 2,
     },
+    # Performance-marketing profiles, so the marketing sample JD finds more than two people.
+    # Skills mirror what the parser extracts from that JD, and two sit in Gurugram so the
+    # location match scores as well.
+    {
+        "name": "Rohan Mehta",
+        "title": "Performance Marketing Manager",
+        "company": "Mamaearth",
+        "loc": "Gurugram, Haryana, India",
+        "skills": ["performance marketing", "meta ads", "google ads", "ga4", "cac optimization"],
+        "yrs": 5,
+    },
+    {
+        "name": "Priyanka Nair",
+        "title": "Growth Marketing Manager",
+        "company": "boAt",
+        "loc": "Delhi, India",
+        "skills": ["growth marketing", "meta ads", "amazon ads", "sql", "ltv:cac modeling"],
+        "yrs": 6,
+    },
+    {
+        "name": "Aditya Kulkarni",
+        "title": "Paid Media Manager",
+        "company": "Sugar Cosmetics",
+        "loc": "Mumbai, Maharashtra, India",
+        "skills": ["paid media", "meta ads", "google ads", "youtube ads", "analytics"],
+        "yrs": 4,
+    },
+    {
+        "name": "Sneha Reddy",
+        "title": "Performance Marketing Lead",
+        "company": "Lenskart",
+        "loc": "Gurugram, Haryana, India",
+        "skills": ["performance marketing", "google ads", "amazon ads", "ga4", "sql"],
+        "yrs": 7,
+    },
+    {
+        "name": "Karan Malhotra",
+        "title": "Ecommerce Marketing Manager",
+        "company": "Wakefit",
+        "loc": "Noida, Uttar Pradesh, India",
+        "skills": ["amazon ads", "marketplace marketing", "google ads", "analytics", "sql"],
+        "yrs": 5,
+    },
+    {
+        "name": "Divya Menon",
+        "title": "Media Buying Manager",
+        "company": "Plum Goodness",
+        "loc": "Bengaluru, Karnataka, India",
+        "skills": [
+            "media buying",
+            "meta ads",
+            "influencer marketing",
+            "affiliate marketing",
+            "ga4",
+        ],
+        "yrs": 4,
+    },
 ]
 
 

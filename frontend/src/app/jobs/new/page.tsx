@@ -18,14 +18,27 @@ import { useCreateJobMutation, useParseJobMutation } from "@/features/jobs/api";
 import { getErrorMessage } from "@/lib/errors";
 import type { ParsedJob, SearchCriteria } from "@/types/job";
 
-const SAMPLE_JD = `Senior Frontend Engineer (Next.js) — Northline Labs, Bengaluru
+// Two samples, not one: a demo that only ever runs the engineering JD exercises one slice
+// of the seeded dataset and creates the same job every time. The marketing one reaches the
+// other half of the seeds and gives a second visitor something different to try.
+const SAMPLE_JDS = {
+  engineering: `Senior Frontend Engineer (Next.js) — Northline Labs, Bengaluru
 
 We are hiring a Senior Frontend Engineer to own our recruiter-facing dashboard. You will work with React 19, Next.js App Router, TypeScript and Tailwind, partnering with a Python backend team.
 
 Must have: 5+ years building production React apps, strong TypeScript, experience with data-heavy UIs and state management (Redux Toolkit or similar), and comfort owning features end to end.
 Nice to have: Playwright, design-system experience, prior startup experience.
 
-Hybrid (3 days in office, Bengaluru). CTC 30–45 LPA. Immediate joiners preferred; notice period up to 60 days acceptable.`;
+Hybrid (3 days in office, Bengaluru). CTC 30–45 LPA. Immediate joiners preferred; notice period up to 60 days acceptable.`,
+  marketing: `Performance Marketing Manager — Saffronleaf Consumer Brands, Gurugram
+
+Saffronleaf is a D2C personal-care brand (₹90 crore ARR) hiring a Performance Marketing Manager to own paid acquisition end to end across Meta, Google and Amazon Ads, starting from a ₹1.2 crore monthly budget. You will manage a designer, a copywriter and two agency relationships, and own CAC, ROAS and LTV reporting for the leadership team.
+
+Must have: 4–6 years in performance marketing, at least 2 years running D2C or ecommerce budgets above ₹50 lakh a month, hands-on Meta Ads Manager and Google Ads, comfort with GA4, and SQL or spreadsheet modelling for LTV:CAC.
+Nice to have: Amazon Ads, quick-commerce experience (Blinkit, Zepto, Instamart), influencer or affiliate programmes at scale, marketing-mix modelling or incrementality testing, and a beauty, wellness or FMCG background.
+
+Full-time from the Gurugram office; Delhi NCR candidates welcome. CTC 18–28 LPA plus performance bonus. Notice period up to 45 days.`,
+} as const;
 
 const emptyCriteria: SearchCriteria = {
   titles: [],
@@ -144,8 +157,11 @@ export default function NewJobPage() {
                 />
                 {parseState.isLoading ? "Analysing…" : "Analyse"}
               </Button>
-              <Button variant="outline" onClick={() => setDescription(SAMPLE_JD)}>
-                <Wand2 data-icon="inline-start" /> Use sample JD
+              <Button variant="outline" onClick={() => setDescription(SAMPLE_JDS.engineering)}>
+                <Wand2 data-icon="inline-start" /> Sample: engineering
+              </Button>
+              <Button variant="outline" onClick={() => setDescription(SAMPLE_JDS.marketing)}>
+                <Wand2 data-icon="inline-start" /> Sample: marketing
               </Button>
             </div>
           </CardContent>

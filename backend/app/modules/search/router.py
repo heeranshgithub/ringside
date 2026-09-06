@@ -24,7 +24,7 @@ router = APIRouter(prefix="/search", tags=["search"])
 _LABELS = {
     "mock": (
         "Demo dataset",
-        "30 seeded profiles, no account needed. Use this unless you are showing a real source.",
+        "36 seeded profiles, no account needed. Use this unless you are showing a real source.",
     ),
     "pdl": (
         "People Data Labs",

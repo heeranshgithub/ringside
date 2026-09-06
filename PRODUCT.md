@@ -58,7 +58,7 @@ people-search criteria in one step, and every call comes back as ranked, evidenc
 
 - Working product with real call data shape: recordings (public WAV URLs), structured result objects, engagement
   and answered-by flags, retry state, event timeline. See `backend/app/modules/calls/schemas.py`.
-- Demo dataset of 30 synthetic candidates (`backend/app/integrations/people/mock.py`), labelled as demo in the UI.
+- Demo dataset of 36 synthetic candidates (`backend/app/integrations/people/mock.py`), labelled as demo in the UI.
 - No customer names, testimonials, pricing, or benchmarks exist. Do not invent them.
 
 ## Product Principles
