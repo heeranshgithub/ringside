@@ -69,10 +69,10 @@ lists the org; it stores the IDs it created and fetches by ID.
 HMAC-SHA256 signature over `"{timestamp}." + body`, keyed by the API key. A webhook is applied only if
 that verifies, and every delivery is stored with its `signature_valid` flag either way. The one bypass is
 running with no `HUNAR_API_KEY` at all, where there is no secret to check against and the app refuses to
-place calls anyway. The poller is
-the fallback: every 30 seconds it asks Mongo, not Hunar, which calls are unfinished, plus completed ones
-still missing a recording for up to 15 minutes, then re-fetches at most 50 of them by ID. With nothing
-in flight it makes no upstream requests at all, so local runs work without a public URL.
+place calls anyway. The poller is the fallback: every 30 seconds it asks Mongo, not Hunar, which calls
+are unfinished, plus completed ones still missing a recording or result for up to 15 minutes, then
+re-fetches at most 50 of them by ID. With nothing in flight it makes no upstream requests at all, so
+local runs work without a public URL.
 
 **camelCase on the wire, snake_case everywhere else.** One Pydantic base model does the conversion at
 the boundary. Mongo documents are plain snake_case and never leave the service layer unconverted.
@@ -148,8 +148,8 @@ only `NEXT_PUBLIC_API_BASE_URL`.
 ## API
 
 Forty routes, all under `/api` and speaking camelCase, except `GET /health` and `POST /webhooks/hunar`
-which sit outside the gate. The areas are jobs, agents, candidates, search, calls, dial-target, events
-and dashboard. Errors always look like
+which sit outside the gate. The areas are jobs, agents, candidates, search, calls, dial-target, events,
+dashboard and config. Errors always look like
 `{"error": {"code": ..., "message": ..., "details": {"requestId": ...}}}`. Browse the full surface at
 `/docs` when running locally.
 
@@ -164,9 +164,9 @@ The assignment names four. **Proxycurl shut down on 4 July 2025** after LinkedIn
 and they differ more in billing than in data. **People Data Labs** is the default: 100 searches a month
 self-serve, plus a sandbox returning synthetic records with an identical schema at zero credits.
 **Coresignal** searches free and charges 20 credits per profile collected. **Apollo** searches free but
-gates API access to paid plans and masks last names. All four adapters are wired and
-`GET /search/providers` reports which are configured; the Coresignal adapter is written from its published
-docs and has never been run against a live key, which its own docstring says out loud.
+gates API access to paid plans and masks last names. All three, plus the demo dataset, are wired as
+adapters and `GET /search/providers` reports which are configured; the Coresignal adapter is written from
+its published docs and has never been run against a live key, which its own docstring says out loud.
 
 Because safe-dial means a sourced candidate is never called on their own number, a provider is judged here
 on whether its *search* is real and affordable, never on whether it sells contact data.
@@ -181,7 +181,7 @@ origin to `CORS_ORIGINS`, and set `PUBLIC_BASE_URL` to the service URL so webhoo
 ## Repository layout
 
 `backend/app` splits into `core` (settings, the camelCase boundary, errors, db, event bus), `integrations`
-(hunar, the four people-search adapters, llm), `modules` (jobs, agents, candidates, search, calls, dial,
+(hunar, the three people-search adapters plus the demo one, llm), `modules` (jobs, agents, candidates, search, calls, dial,
 events, webhooks, dashboard, each a router plus service plus schemas) and `workers` (the call poller). The
 simulators live in `backend/tests`, deliberately outside `app`.
 
