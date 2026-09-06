@@ -28,6 +28,27 @@ export function formatClockDay(iso: string | null | undefined): string {
   return `${d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}, ${clock}`;
 }
 
+/** "07:11 pm" — for a list where the day is already established by a heading. */
+export function formatTimeOnly(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+/** "06 Sept" — the heading that establishes it. */
+export function formatDayOnly(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+}
+
+/** Whether two timestamps fall on the same local day. */
+export function sameDay(a: string, b: string): boolean {
+  return new Date(a).toDateString() === new Date(b).toDateString();
+}
+
 export function formatRelative(iso: string | null | undefined): string {
   if (!iso) return "—";
   const diff = Date.now() - new Date(iso).getTime();

@@ -1,6 +1,7 @@
 "use client";
 
 import { FileAudio, RefreshCw, ScrollText, Sparkles } from "lucide-react";
+import { Fragment } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -25,10 +26,13 @@ import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
 import {
   formatDateTime,
+  formatDayOnly,
   formatDuration,
   formatResultValue,
+  formatTimeOnly,
   humanizeKey,
   maskPhone,
+  sameDay,
   titleCase,
 } from "@/lib/format";
 import type { Call } from "@/types/call";
@@ -50,6 +54,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </section>
   );
 }
+
+/** Inside one call's timeline every webhook kind is prefixed "call_", which says nothing here. */
+const eventLabel = (kind: string) => titleCase(kind.replace(/^call_/, ""));
 
 export function CallDetailBody({ call }: { call: Call }) {
   const { data: config } = useGetConfigQuery();
@@ -210,24 +217,39 @@ export function CallDetailBody({ call }: { call: Call }) {
 
       <Section title="Timeline">
         <ol className="space-y-1.5 text-xs">
-          {call.events.map((e, i) => (
-            /*
-              A grid, not a flex row. As flex, `ml-auto` on the source pushed it to the edge and
-              squeezed the kind until a long one ("Call Summary") wrapped; `items-center` then
-              centred the timestamp and source against the taller row, so that one line sat out
-              of step with every other. Real columns give the kind its own track instead of
-              leftovers, and baseline alignment keeps the first line of each cell on one line
-              even if something does wrap.
-            */
-            <li key={i} className="grid grid-cols-[7rem_1fr_auto] items-baseline gap-x-2 gap-y-1">
-              <span className="text-muted-foreground tabular-nums">{formatDateTime(e.at)}</span>
-              <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span className="font-medium">{titleCase(e.kind)}</span>
-                {e.status && <StatusBadge status={e.status} />}
-              </span>
-              <span className="text-muted-foreground text-right">{e.source}</span>
-            </li>
-          ))}
+          {call.events.map((e, i) => {
+            const prev = i > 0 ? call.events[i - 1] : null;
+            return (
+              <Fragment key={i}>
+                {/*
+                  The day is a heading, not a column. Repeating "06 Sept" on every row spent a
+                  third of the width restating something that changes once, if at all — and that
+                  width is exactly what a long kind plus its badge needed to stay on one line.
+                  A call that retries overnight still reads correctly, because the heading only
+                  appears when the day actually changes.
+                */}
+                {(!prev || !sameDay(prev.at, e.at)) && (
+                  <li className="text-muted-foreground pt-1.5 text-[11px] font-medium first:pt-0">
+                    {formatDayOnly(e.at)}
+                  </li>
+                )}
+                {/*
+                  A grid, not a flex row. As flex, `ml-auto` on the source pushed it to the edge
+                  and squeezed the kind until a long one wrapped; `items-center` then centred the
+                  timestamp and source against the taller row, so that line sat out of step with
+                  every other. Real columns give the kind its own track instead of leftovers.
+                */}
+                <li className="grid grid-cols-[4.5rem_1fr_auto] items-baseline gap-x-2 gap-y-1">
+                  <span className="text-muted-foreground tabular-nums">{formatTimeOnly(e.at)}</span>
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-medium">{eventLabel(e.kind)}</span>
+                    {e.status && <StatusBadge status={e.status} />}
+                  </span>
+                  <span className="text-muted-foreground text-right">{e.source}</span>
+                </li>
+              </Fragment>
+            );
+          })}
         </ol>
       </Section>
 
@@ -261,7 +283,14 @@ export function CallDetailSheet({
   });
   return (
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      {/*
+        The width has to carry the same variant chain as the base component's
+        `data-[side=right]:sm:max-w-sm`, not a plain `sm:max-w-xl`. tailwind-merge sees two
+        different variant chains, keeps both, and the attribute selector then wins on
+        specificity — so a plain `sm:max-w-xl` here is silently dead and the sheet stays at
+        384px. That is what cramped the timeline into wrapping.
+      */}
+      <SheetContent className="w-full overflow-y-auto data-[side=right]:sm:max-w-xl">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <FileAudio className="size-4" />
