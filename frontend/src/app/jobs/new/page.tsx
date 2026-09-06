@@ -121,7 +121,7 @@ export default function NewJobPage() {
             <CardTitle>Job description</CardTitle>
             <CardDescription>
               {config?.llmEnabled
-                ? `Analysed with ${config.llmModel} via OpenRouter.`
+                ? "Analysed by the model."
                 : "No LLM key configured, so analysis is unavailable."}
             </CardDescription>
           </CardHeader>

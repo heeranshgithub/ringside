@@ -328,8 +328,7 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
             <CardTitle>This job has no voice agent yet</CardTitle>
             <CardDescription>
               Generate one from the screening questions
-              {config?.llmEnabled ? ` using ${config.llmModel}` : " using templates"}, or attach an
-              agent you already created.
+              {!config?.llmEnabled && " using templates"}, or attach an agent you already created.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-end gap-3">
@@ -342,7 +341,15 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
             </Button>
             {agents && agents.length > 0 && (
               <div className="flex items-end gap-2">
-                <div className="space-y-1.5">
+                {/*
+                  Flex gap, not `space-y`: Base UI gives a Select a hidden `position: fixed`
+                  input as its last child for form integration. That input takes the
+                  `:last-child` slot `space-y` exempts, so the trigger above it keeps a 6px
+                  bottom margin meant only for gaps between controls. The box then ends 6px
+                  below the trigger, and this `items-end` row aligns on the box, sitting the
+                  select a notch above the button beside it.
+                */}
+                <div className="flex flex-col gap-1.5">
                   <p className="text-muted-foreground text-xs">or attach existing</p>
                   <Select
                     onValueChange={async (v) => {
