@@ -176,6 +176,19 @@ The frontend needs only `NEXT_PUBLIC_API_BASE_URL`.
   Set `NEXT_PUBLIC_API_BASE_URL` to the App Runner URL and add the Amplify URL to the backend's `CORS_ORIGINS`.
 - **Database → MongoDB Atlas** (or any Mongo); set `MONGODB_URI`.
 
+## Hunar constraints worth knowing
+
+Measured against the live API, not documented in its OpenAPI schema:
+
+| Rule | Value |
+|---|---|
+| `earliest_call_time` minimum | `08:00` |
+| `last_call_time` maximum | `21:00` |
+
+A window outside that is rejected with a 400 before Hunar even looks up the agent, so
+"call at any time" is not on offer. `GuardrailsInput` validates it on our side and returns a
+422 naming the field, rather than relaying a bare platform error to the user.
+
 ## Choosing a people-search provider
 
 The assignment names four. One is gone and the rest differ more in billing than in data.

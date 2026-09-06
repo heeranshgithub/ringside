@@ -25,15 +25,22 @@ from app.core.errors import AppError, FeatureDisabled, NotFound, ValidationFaile
 from app.core.models import new_id, utcnow
 from app.core.phone import assert_dialable, mask, normalize_phone, pretty
 from app.integrations.hunar.client import HunarClient
-from app.integrations.hunar.schemas import Guardrails, HunarAgentCreate, HunarCallCreate
+from app.integrations.hunar.schemas import (
+    EARLIEST_CALL_TIME,
+    LATEST_CALL_TIME,
+    Guardrails,
+    HunarAgentCreate,
+    HunarCallCreate,
+)
 
 log = structlog.get_logger()
 
 VERIFY_AGENT_KEY = "dial_verify_agent"
-ANY_TIME = Guardrails(
+# The widest window Hunar will accept. It is not "any time": 00:00 is rejected outright.
+WIDEST_WINDOW = Guardrails(
     allowed_days=["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
-    earliest_call_time="00:00",
-    last_call_time="23:59",
+    earliest_call_time=EARLIEST_CALL_TIME,
+    last_call_time=LATEST_CALL_TIME,
 )
 
 
@@ -158,7 +165,7 @@ async def start_verification(
             custom_data={"code": " ".join(code)},
             request_id=f"verify-{doc['_id'][:8]}",
             timezone=settings.hunar_timezone,
-            guardrails=ANY_TIME,
+            guardrails=WIDEST_WINDOW,
         )
     )
     await db.dial_targets.update_one({"_id": doc["_id"]}, {"$set": {"hunar_call_id": created.id}})

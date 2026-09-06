@@ -182,3 +182,46 @@ class TestProviderRegistry:
         provider = _build_providers(settings(pdl_api_key="a"))["pdl"]
         assert isinstance(provider, PdlProvider)
         assert provider.sandbox is True
+
+
+class TestCallingWindow:
+    """Hunar rejects a window outside 08:00-21:00 before it even looks up the agent.
+
+    Bounds measured against the live API on 2026-09-06; they are not in its OpenAPI schema.
+    """
+
+    def test_defaults_are_inside_the_platform_window(self) -> None:
+        from app.modules.calls.schemas import GuardrailsInput
+
+        g = GuardrailsInput()
+        assert g.earliest_call_time == "08:00"
+        assert g.last_call_time == "21:00"
+
+    @pytest.mark.parametrize(
+        ("earliest", "last"),
+        [("00:00", "23:59"), ("07:59", "20:00"), ("08:00", "23:59"), ("08:00", "21:01")],
+    )
+    def test_a_window_hunar_would_reject_never_leaves_this_app(
+        self, earliest: str, last: str
+    ) -> None:
+        from pydantic import ValidationError
+
+        from app.modules.calls.schemas import GuardrailsInput
+
+        with pytest.raises(ValidationError):
+            GuardrailsInput(earliest_call_time=earliest, last_call_time=last)
+
+    def test_an_inverted_window_is_rejected(self) -> None:
+        from pydantic import ValidationError
+
+        from app.modules.calls.schemas import GuardrailsInput
+
+        with pytest.raises(ValidationError):
+            GuardrailsInput(earliest_call_time="20:00", last_call_time="09:00")
+
+    def test_the_verification_call_uses_the_widest_legal_window(self) -> None:
+        from app.integrations.hunar.schemas import EARLIEST_CALL_TIME, LATEST_CALL_TIME
+        from app.modules.dial.service import WIDEST_WINDOW
+
+        assert WIDEST_WINDOW.earliest_call_time == EARLIEST_CALL_TIME
+        assert WIDEST_WINDOW.last_call_time == LATEST_CALL_TIME

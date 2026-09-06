@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from app.core.models import ApiModel, MongoModel, StrictApiModel
+from app.integrations.hunar.schemas import EARLIEST_CALL_TIME, LATEST_CALL_TIME
 
 
 class CallEventDto(ApiModel):
@@ -68,11 +70,36 @@ class CallDto(MongoModel):
 
 
 class GuardrailsInput(ApiModel):
+    """The calling window, validated against Hunar's own limits before we send it.
+
+    Hunar rejects a window outside 08:00-21:00 with a 400 that surfaces as a bare
+    "Minimum allowed earliest_call_time is 08:00" toast. Catching it here turns that into
+    our own 422 naming the field, and stops a request going out that cannot succeed.
+    """
+
     allowed_days: list[str] = Field(
         default_factory=lambda: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
     )
-    earliest_call_time: str = "00:00"
-    last_call_time: str = "23:59"
+    earliest_call_time: str = EARLIEST_CALL_TIME
+    last_call_time: str = LATEST_CALL_TIME
+
+    @field_validator("earliest_call_time", "last_call_time")
+    @classmethod
+    def _within_the_platform_window(cls, value: str, info: ValidationInfo) -> str:
+        if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", value):
+            raise ValueError(f"{info.field_name} must be HH:MM, got {value!r}")
+        if value < EARLIEST_CALL_TIME or value > LATEST_CALL_TIME:
+            raise ValueError(
+                f"{info.field_name} must be between {EARLIEST_CALL_TIME} and "
+                f"{LATEST_CALL_TIME}; Hunar rejects anything outside that window"
+            )
+        return value
+
+    @model_validator(mode="after")
+    def _ordered(self) -> GuardrailsInput:
+        if self.earliest_call_time >= self.last_call_time:
+            raise ValueError("earliestCallTime must be before lastCallTime")
+        return self
 
 
 class RetryInput(ApiModel):

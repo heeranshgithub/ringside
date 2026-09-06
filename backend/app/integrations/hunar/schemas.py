@@ -112,6 +112,13 @@ class RetryConfig(_Upstream):
     retry_interval_hours: int
 
 
+# Hunar enforces a calling window server-side and rejects anything outside it with a 400,
+# before it even looks up the agent. The bounds are not in their OpenAPI schema; these were
+# measured against the live API on 2026-09-06.
+EARLIEST_CALL_TIME = "08:00"
+LATEST_CALL_TIME = "21:00"
+
+
 class Guardrails(_Upstream):
     allowed_days: list[str]
     earliest_call_time: str

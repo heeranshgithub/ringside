@@ -29,12 +29,14 @@ import { getErrorMessage } from "@/lib/errors";
 import type { Candidate } from "@/types/candidate";
 import type { LaunchCallsResult } from "@/types/call";
 
+// Hunar rejects any window outside 08:00-21:00 with a 400, so "any time" was never on
+// offer. These are the real choices; the widest one is the platform maximum.
 const WINDOWS = {
   now: {
-    label: "Call now (any time)",
+    label: "As soon as possible (08:00–21:00 IST, any day)",
     allowedDays: ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"],
-    earliestCallTime: "00:00",
-    lastCallTime: "23:59",
+    earliestCallTime: "08:00",
+    lastCallTime: "21:00",
   },
   business: {
     label: "Business hours (Mon–Sat, 09:00–20:00 IST)",
@@ -172,7 +174,7 @@ export function LaunchCallsDialog({
           <Field
             label="Calling window"
             htmlFor="launch-window"
-            hint="Outside the window Hunar keeps the call scheduled."
+            hint="Hunar allows 08:00–21:00 only. Outside the window it keeps the call scheduled."
           >
             <Select value={win} onValueChange={(v) => setWin((v as WindowKey | null) ?? "now")}>
               <SelectTrigger id="launch-window" className="w-full">
