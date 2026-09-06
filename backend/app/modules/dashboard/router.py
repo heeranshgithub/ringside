@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any, Literal
 
 from fastapi import APIRouter
@@ -72,7 +73,8 @@ def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
             label="Language model",
             state="ok" if c.llm.enabled else "missing",
             detail=(
-                f"Parsing, drafting and scoring use {s.llm_model}."
+                f"Parsing, drafting and scoring use {s.llm_model}; "
+                f"transcription uses {s.llm_audio_model}."
                 if c.llm.enabled
                 else "Job parsing, agent drafting, scoring and transcription are refused."
             ),
@@ -105,7 +107,7 @@ def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
             label="People search",
             state="ok" if len(c.providers) > 1 else "degraded",
             detail=(
-                f"Live providers: {', '.join(sorted(k for k in c.providers if k != 'mock'))}."
+                f"Live providers: {_live_providers(c.providers)}."
                 if len(c.providers) > 1
                 else "Only the seeded demo dataset. No third-party source is configured."
             ),
@@ -124,6 +126,17 @@ def _capabilities(c: ContainerDep) -> list[CapabilityDto]:
         ),
     ]
     return caps
+
+
+def _live_providers(providers: Mapping[str, object]) -> str:
+    """Name each real source, and say when PDL is its zero-credit sandbox rather than the
+    live index, so this row agrees with the picker on the search page."""
+    names = []
+    for key in sorted(providers):
+        if key == "mock":
+            continue
+        names.append(f"{key} (sandbox)" if getattr(providers[key], "sandbox", False) else key)
+    return ", ".join(names)
 
 
 @router.get("/config", response_model=ConfigDto)
