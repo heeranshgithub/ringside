@@ -155,134 +155,147 @@ export default function NewJobPage() {
           <CardHeader>
             <CardTitle>Extracted details</CardTitle>
             <CardDescription>
-              {parsed
-                ? "Review and edit before creating the job."
-                : "Fill these in manually or analyse the description first."}
+              {parseState.isLoading
+                ? "Analysing… these fields are locked until it finishes."
+                : parsed
+                  ? "Review and edit before creating the job."
+                  : "Fill these in manually or analyse the description first."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Title" htmlFor="job-title" className="sm:col-span-2">
-                <Input
-                  id="job-title"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                />
-              </Field>
-              <Field label="Company" htmlFor="job-company">
-                <Input
-                  id="job-company"
-                  value={form.company}
-                  onChange={(e) => setForm({ ...form, company: e.target.value })}
-                />
-              </Field>
-              <Field label="Location" htmlFor="job-location">
-                <Input
-                  id="job-location"
-                  value={form.location}
-                  onChange={(e) => setForm({ ...form, location: e.target.value })}
-                />
-              </Field>
-              <Field label="Seniority" htmlFor="job-seniority">
-                <Input
-                  id="job-seniority"
-                  value={form.seniority}
-                  onChange={(e) => setForm({ ...form, seniority: e.target.value })}
-                />
-              </Field>
-              <Field label="Salary range" htmlFor="job-salary">
-                <Input
-                  id="job-salary"
-                  value={form.salaryRange}
-                  onChange={(e) => setForm({ ...form, salaryRange: e.target.value })}
-                />
-              </Field>
-            </div>
-            <Field label="Summary" htmlFor="job-summary">
-              <Textarea
-                id="job-summary"
-                rows={2}
-                value={form.summary}
-                onChange={(e) => setForm({ ...form, summary: e.target.value })}
-              />
-            </Field>
-            <Field label="Must-haves" htmlFor="job-must">
-              <ChipsInput
-                id="job-must"
-                value={form.mustHaves}
-                onChange={(mustHaves) => setForm({ ...form, mustHaves })}
-                placeholder="Add a requirement and press Enter"
-              />
-            </Field>
-            <Field label="Nice-to-haves" htmlFor="job-nice">
-              <ChipsInput
-                id="job-nice"
-                value={form.niceToHaves}
-                onChange={(niceToHaves) => setForm({ ...form, niceToHaves })}
-                placeholder="Optional"
-              />
-            </Field>
-            <Field
-              label="Screening questions (one per line)"
-              htmlFor="job-questions"
-              hint="These become the voice agent's script."
-            >
-              <Textarea
-                id="job-questions"
-                rows={6}
-                value={form.questionsText}
-                onChange={(e) => setForm({ ...form, questionsText: e.target.value })}
-              />
-            </Field>
-            <div className="space-y-3 rounded-lg border p-3">
-              <p className="text-sm font-medium">People-search criteria</p>
+          <CardContent>
+            {/*
+              The analysis overwrites every field in here, so anything typed while it is in
+              flight would be silently thrown away. A fieldset disables the whole group at
+              once — chip inputs and the submit button included — rather than threading a
+              `disabled` prop through a dozen controls.
+            */}
+            <fieldset disabled={parseState.isLoading} className="group min-w-0 space-y-4">
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Titles" htmlFor="crit-titles">
-                  <ChipsInput
-                    id="crit-titles"
-                    value={form.criteria.titles}
-                    onChange={(titles) =>
-                      setForm({ ...form, criteria: { ...form.criteria, titles } })
-                    }
-                    placeholder="Frontend Engineer"
-                  />
-                </Field>
-                <Field label="Locations" htmlFor="crit-locations">
-                  <ChipsInput
-                    id="crit-locations"
-                    value={form.criteria.locations}
-                    onChange={(locations) =>
-                      setForm({ ...form, criteria: { ...form.criteria, locations } })
-                    }
-                    placeholder="Bengaluru"
-                  />
-                </Field>
-                <Field label="Skills" htmlFor="crit-skills">
-                  <ChipsInput
-                    id="crit-skills"
-                    value={form.criteria.skills}
-                    onChange={(skills) =>
-                      setForm({ ...form, criteria: { ...form.criteria, skills } })
-                    }
-                    placeholder="react"
-                  />
-                </Field>
-                <Field label="Keywords" htmlFor="crit-keywords">
+                <Field label="Title" htmlFor="job-title" className="sm:col-span-2">
                   <Input
-                    id="crit-keywords"
-                    value={form.criteria.keywords}
-                    onChange={(e) =>
-                      setForm({ ...form, criteria: { ...form.criteria, keywords: e.target.value } })
-                    }
+                    id="job-title"
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  />
+                </Field>
+                <Field label="Company" htmlFor="job-company">
+                  <Input
+                    id="job-company"
+                    value={form.company}
+                    onChange={(e) => setForm({ ...form, company: e.target.value })}
+                  />
+                </Field>
+                <Field label="Location" htmlFor="job-location">
+                  <Input
+                    id="job-location"
+                    value={form.location}
+                    onChange={(e) => setForm({ ...form, location: e.target.value })}
+                  />
+                </Field>
+                <Field label="Seniority" htmlFor="job-seniority">
+                  <Input
+                    id="job-seniority"
+                    value={form.seniority}
+                    onChange={(e) => setForm({ ...form, seniority: e.target.value })}
+                  />
+                </Field>
+                <Field label="Salary range" htmlFor="job-salary">
+                  <Input
+                    id="job-salary"
+                    value={form.salaryRange}
+                    onChange={(e) => setForm({ ...form, salaryRange: e.target.value })}
                   />
                 </Field>
               </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={submit} disabled={!canCreate || createState.isLoading}>
-                {createState.isLoading ? "Creating…" : "Create job"}
-              </Button>
-            </div>
+              <Field label="Summary" htmlFor="job-summary">
+                <Textarea
+                  id="job-summary"
+                  rows={2}
+                  value={form.summary}
+                  onChange={(e) => setForm({ ...form, summary: e.target.value })}
+                />
+              </Field>
+              <Field label="Must-haves" htmlFor="job-must">
+                <ChipsInput
+                  id="job-must"
+                  value={form.mustHaves}
+                  onChange={(mustHaves) => setForm({ ...form, mustHaves })}
+                  placeholder="Add a requirement and press Enter"
+                />
+              </Field>
+              <Field label="Nice-to-haves" htmlFor="job-nice">
+                <ChipsInput
+                  id="job-nice"
+                  value={form.niceToHaves}
+                  onChange={(niceToHaves) => setForm({ ...form, niceToHaves })}
+                  placeholder="Optional"
+                />
+              </Field>
+              <Field
+                label="Screening questions (one per line)"
+                htmlFor="job-questions"
+                hint="These become the voice agent's script."
+              >
+                <Textarea
+                  id="job-questions"
+                  rows={6}
+                  value={form.questionsText}
+                  onChange={(e) => setForm({ ...form, questionsText: e.target.value })}
+                />
+              </Field>
+              <div className="space-y-3 rounded-lg border p-3">
+                <p className="text-sm font-medium">People-search criteria</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label="Titles" htmlFor="crit-titles">
+                    <ChipsInput
+                      id="crit-titles"
+                      value={form.criteria.titles}
+                      onChange={(titles) =>
+                        setForm({ ...form, criteria: { ...form.criteria, titles } })
+                      }
+                      placeholder="Frontend Engineer"
+                    />
+                  </Field>
+                  <Field label="Locations" htmlFor="crit-locations">
+                    <ChipsInput
+                      id="crit-locations"
+                      value={form.criteria.locations}
+                      onChange={(locations) =>
+                        setForm({ ...form, criteria: { ...form.criteria, locations } })
+                      }
+                      placeholder="Bengaluru"
+                    />
+                  </Field>
+                  <Field label="Skills" htmlFor="crit-skills">
+                    <ChipsInput
+                      id="crit-skills"
+                      value={form.criteria.skills}
+                      onChange={(skills) =>
+                        setForm({ ...form, criteria: { ...form.criteria, skills } })
+                      }
+                      placeholder="react"
+                    />
+                  </Field>
+                  <Field label="Keywords" htmlFor="crit-keywords">
+                    <Input
+                      id="crit-keywords"
+                      value={form.criteria.keywords}
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          criteria: { ...form.criteria, keywords: e.target.value },
+                        })
+                      }
+                    />
+                  </Field>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={submit} disabled={!canCreate || createState.isLoading}>
+                  {createState.isLoading ? "Creating…" : "Create job"}
+                </Button>
+              </div>
+            </fieldset>
           </CardContent>
         </Card>
       </div>

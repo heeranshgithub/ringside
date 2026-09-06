@@ -31,7 +31,16 @@ export function ChipsInput({
   };
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5 rounded-lg border p-1.5", className)}>
+    // The border and the chips are plain markup, so a wrapping `fieldset[disabled]`
+    // greys out the text input but leaves them looking live. Dim the whole control
+    // from the group instead, and let the inner input inherit that rather than
+    // fading twice.
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-1.5 rounded-lg border p-1.5 transition-opacity group-disabled:opacity-50",
+        className,
+      )}
+    >
       {value.map((chip) => (
         <span
           key={chip}
@@ -52,7 +61,7 @@ export function ChipsInput({
         id={id}
         value={draft}
         placeholder={value.length ? "" : placeholder}
-        className="h-6 min-w-32 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+        className="h-6 min-w-32 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0 disabled:opacity-100"
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
         onKeyDown={(e) => {
