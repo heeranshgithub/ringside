@@ -69,7 +69,9 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def cors_origins(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins_raw.split(",") if o.strip()]
+        # Starlette matches the Origin header exactly, so a trailing slash pasted from a
+        # browser bar would silently disable CORS for that origin.
+        return [o.strip().rstrip("/") for o in self.cors_origins_raw.split(",") if o.strip()]
 
     @computed_field  # type: ignore[prop-decorator]
     @property

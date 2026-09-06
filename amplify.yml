@@ -1,0 +1,23 @@
+version: 1
+applications:
+  - frontend:
+      phases:
+        preBuild:
+          commands:
+            - corepack enable
+            # Pinned to the same version as .github/workflows/ci.yml and package.json's
+            # packageManager field, so Amplify and CI resolve the identical lockfile.
+            - corepack prepare pnpm@11.3.0 --activate
+            - pnpm install --frozen-lockfile --ignore-scripts
+        build:
+          commands:
+            - pnpm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*
+    appRoot: frontend

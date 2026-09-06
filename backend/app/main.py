@@ -12,6 +12,7 @@ import structlog
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.aws_secrets import load_aws_secrets
 from app.core.config import Settings, get_settings
 from app.core.db import Db, ensure_indexes, make_client
 from app.core.deps import Container, require_access
@@ -94,7 +95,12 @@ def create_app(
     llm: LlmService | None = None,
     providers: dict[str, PeopleProvider] | None = None,
 ) -> FastAPI:
-    settings = settings or get_settings()
+    if settings is None:
+        # Must precede get_settings(): it is lru_cache'd, so the first call freezes whatever
+        # the environment holds. Deployments set AWS_SECRETS_ID; everywhere else this is a
+        # no-op and the local .env wins.
+        load_aws_secrets()
+        settings = get_settings()
     configure_logging(settings.env, settings.log_level)
 
     @asynccontextmanager
