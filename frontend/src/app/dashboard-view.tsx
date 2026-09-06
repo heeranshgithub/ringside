@@ -184,7 +184,7 @@ export function DashboardView() {
           <EmptyState
             icon={<Users className="size-5" />}
             title="No calls yet"
-            description="Create a job, add a candidate and start a call. With safe-dial on, it rings your own test number."
+            description="Create a job, add a candidate and start a call. With safe-dial on, it rings the number you verify in Settings, never the candidate."
             action={
               <Button size="sm" nativeButton={false} render={<Link href="/jobs/new" />}>
                 Create a job

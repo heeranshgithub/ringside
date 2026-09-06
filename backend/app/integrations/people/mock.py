@@ -1,5 +1,6 @@
-"""Seeded provider so the demo works with zero third-party credits. Phones are intentionally absent:
-safe-dial mode supplies the test number, and nothing here can ever be dialled by accident."""
+"""Seeded provider so the demo works with zero third-party credits.
+
+Phones are intentionally absent, so nothing here can ever be dialled by accident."""
 
 from __future__ import annotations
 

@@ -18,8 +18,8 @@ from app.modules.search.schemas import (
 router = APIRouter(prefix="/search", tags=["search"])
 
 # Shown under the provider picker, so keep these true rather than flattering.
-# Ringside never dials a sourced number: safe-dial routes every call to the test number,
-# so a provider is judged on whether its *search* is real and affordable, not on contacts.
+# Ringside never dials a sourced number: safe-dial sends every call to the number the visitor
+# verified, so a provider is judged on whether its *search* is real and affordable, not on contacts.
 _LABELS = {
     "mock": (
         "Demo dataset",
