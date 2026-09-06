@@ -4,8 +4,8 @@
 > people every day across 100 locations, what would you do?*
 
 Buy biometric punch machines. Fingerprint punch at every site is the boring, proven answer to identity
-and presence, and no smartphone is involved. The question is where an LLM earns its place in a problem
-that hardware mostly solves.
+and presence, and no smartphone is involved. The brief does not constrain budget, so I would spend on
+the one piece of hardware that removes the most daily work, and put the LLM on what hardware cannot fix.
 
 ## Primary: punch machines
 
