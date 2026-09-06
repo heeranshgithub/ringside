@@ -448,7 +448,7 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
 
   const list = useMemo(() => candidates ?? [], [candidates]);
   const selectedCandidates = list.filter((c) => selected.has(c.id));
-  const selectable = list.filter((c) => !inFlight(c));
+  const selectable = list.filter((c) => !alreadyCalled(c));
   const allSelected = selectable.length > 0 && selected.size === selectable.length;
   const realDial = config && !config.safeDialMode;
 
@@ -547,7 +547,7 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
                   key={c.id}
                   candidate={c}
                   checked={selected.has(c.id)}
-                  disabled={inFlight(c)}
+                  disabled={alreadyCalled(c)}
                   onCheck={(on) => toggle(c.id, on)}
                   realDial={Boolean(realDial)}
                   onToggleRealDial={async (on) => {
@@ -589,13 +589,13 @@ function CandidatesTab({ job, onLaunched }: { job: Job; onLaunched: () => void }
   );
 }
 
-// Hunar's raw statuses that mean a call is still on its way or mid-conversation. A candidate in
-// one of these cannot be queued again. A finished one can, since a second screen is a real thing,
-// and the launch dialog says so by name. The server enforces the same rule; this only keeps the
-// checkbox honest.
-const IN_FLIGHT = new Set(["NOT_STARTED", "SCHEDULED", "INITIATED", "RINGING", "IN_PROGRESS"]);
-function inFlight(c: Candidate): boolean {
-  return c.latestCallStatus !== null && IN_FLIGHT.has(c.latestCallStatus);
+// Statuses after which a candidate may be picked again: the call never reached them. Anything
+// else, scheduled, ringing, mid-conversation or completed, means the screen has happened or is
+// happening, and it is not run twice from here. The server enforces the same rule; this only
+// keeps the checkbox honest.
+const RECALLABLE = new Set(["FAILED", "CANCELLED", "NOT_CONNECTED"]);
+function alreadyCalled(c: Candidate): boolean {
+  return c.latestCallStatus !== null && !RECALLABLE.has(c.latestCallStatus);
 }
 
 function CandidateRow({
@@ -619,7 +619,7 @@ function CandidateRow({
     <TableRow>
       <TableCell>
         <Checkbox
-          aria-label={disabled ? `${c.name} has a call in flight` : `Select ${c.name}`}
+          aria-label={disabled ? `${c.name} has already been called` : `Select ${c.name}`}
           checked={checked}
           disabled={disabled}
           onCheckedChange={(on) => onCheck(on)}

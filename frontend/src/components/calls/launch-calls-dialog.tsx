@@ -78,8 +78,6 @@ export function LaunchCallsDialog({
   const effectiveAgent = agentId ?? defaultAgentId;
   const realDial = config && !config.safeDialMode;
   const clearedCount = candidates.filter((c) => c.allowRealDial && c.phone).length;
-  // A finished call is not a reason to refuse, but it is a reason to say so before dialling.
-  const alreadyCalled = candidates.filter((c) => c.latestCallStatus !== null);
 
   const submit = async () => {
     if (!effectiveAgent) return;
@@ -163,13 +161,6 @@ export function LaunchCallsDialog({
           </div>
 
           <DialTargetCard />
-
-          {alreadyCalled.length > 0 && (
-            <p className="text-muted-foreground text-xs">
-              Already called: {alreadyCalled.map((c) => c.name).join(", ")}. They will be called
-              again.
-            </p>
-          )}
 
           <Field label="Voice agent" htmlFor="launch-agent">
             <Select

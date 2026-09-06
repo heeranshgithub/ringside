@@ -41,6 +41,9 @@ from app.modules.jobs.service import get_job_doc, job_for_llm
 
 log = structlog.get_logger()
 
+# Ended without reaching the person, so the candidate may be called again.
+RECALLABLE_LIFECYCLE = frozenset({"FAILED", "CANCELLED", "NOT_CONNECTED"})
+
 _UNKNOWN = {"", "unknown", "not available", "n/a", "none", "null"}
 
 
@@ -145,19 +148,21 @@ async def launch_calls(
             )
             continue
         candidate = as_doc(candidate_raw)
-        # One call at a time per candidate. Picking a finished candidate again is allowed, a
-        # second screen is a real thing; a second call while the first is still scheduled,
-        # ringing or mid-conversation never is, and the table cannot be trusted to prevent it.
-        active = await db.calls.find_one(
-            {"candidate_id": cid, "lifecycle_status": {"$nin": list(TERMINAL_LIFECYCLE)}},
-            {"_id": 1},
+        # One screening call per candidate. A finished screen is not run again from here, and
+        # a second call while the first is still scheduled, ringing or mid-conversation never
+        # is. Only a call that never reached the person leaves them callable. The table
+        # mirrors this rule; the server is the one that decides.
+        blocking = await db.calls.find_one(
+            {"candidate_id": cid, "lifecycle_status": {"$nin": list(RECALLABLE_LIFECYCLE)}},
+            {"lifecycle_status": 1},
         )
-        if active:
-            skipped.append(
-                SkippedCandidateDto(
-                    candidate_id=cid, reason="a call is already in flight for this candidate"
-                )
+        if blocking:
+            reason = (
+                "this candidate has already completed a screening call"
+                if blocking.get("lifecycle_status") == "COMPLETED"
+                else "a call is already in flight for this candidate"
             )
+            skipped.append(SkippedCandidateDto(candidate_id=cid, reason=reason))
             continue
         try:
             dialed, safe, dial_source = resolve_dial_number(

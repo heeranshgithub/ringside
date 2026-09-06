@@ -307,3 +307,44 @@ async def test_a_second_launch_while_the_first_call_is_in_flight_is_skipped(
     body = again.json()
     assert body["calls"] == []
     assert "already in flight" in body["skipped"][0]["reason"]
+
+
+async def test_a_candidate_who_completed_a_screen_is_not_called_again(
+    client: AsyncClient, hunar: FakeHunarClient
+) -> None:
+    hunar.auto_complete = False
+    job = await make_job(client)
+    await make_agent(client, job["id"])
+    cand = await make_candidate(client, job["id"])
+    await verify_dial_target(client, hunar)
+    call = (
+        await client.post(
+            "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+        )
+    ).json()["calls"][0]
+
+    payload = {
+        "event_type": "call_summary",
+        "call_id": call["hunarCallId"],
+        "status": "COMPLETED",
+        "lifecycle_status": "COMPLETED",
+        "result": {"summary": "Fine", "interested": True},
+    }
+    body = json.dumps(payload).encode()
+    ts = "1700000000"
+    await client.post(
+        "/webhooks/hunar",
+        content=body,
+        headers={
+            "X-Hunar-Timestamp": ts,
+            "X-Hunar-Signature": compute_signature(TEST_KEY, ts, body),
+            "Content-Type": "application/json",
+        },
+    )
+
+    again = await client.post(
+        "/api/calls/launch", json={"jobId": job["id"], "candidateIds": [cand["id"]]}
+    )
+    body_again = again.json()
+    assert body_again["calls"] == []
+    assert "already completed" in body_again["skipped"][0]["reason"]
