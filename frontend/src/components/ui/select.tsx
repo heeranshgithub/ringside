@@ -53,12 +53,24 @@ function SelectTrigger({
   );
 }
 
+/*
+  Second deliberate edit to this file (the first is the cursor rule on SelectItem below), and
+  `shadcn add select` would put both back.
+
+  Upstream sizes the popup `w-(--anchor-width)`: exactly as wide as the trigger, with
+  `overflow-x-hidden` and nowrap items. So any option longer than its trigger is clipped, and
+  a job title with a company after it ("Performance Marketing Manager · Saffronleaf Consumer
+  Brands") lost its tail. Here the trigger width is the floor, not the size: the popup grows
+  to its longest option, capped so it can never leave the viewport. `align` defaults to
+  "start" rather than "center" for the same reason, so a popup wider than its trigger grows
+  to the right instead of overhanging both edges.
+*/
 function SelectContent({
   className,
   children,
   side = "bottom",
   sideOffset = 4,
-  align = "center",
+  align = "start",
   alignOffset = 0,
   alignItemWithTrigger = false,
   ...props
@@ -81,7 +93,7 @@ function SelectContent({
           data-slot="select-content"
           data-align-trigger={alignItemWithTrigger}
           className={cn(
-            "bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate z-50 max-h-(--available-height) w-(--anchor-width) min-w-36 origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg shadow-md ring-1 duration-100 data-[align-trigger=true]:animate-none",
+            "bg-popover text-popover-foreground ring-foreground/10 data-[side=bottom]:slide-in-from-top-2 data-[side=inline-end]:slide-in-from-left-2 data-[side=inline-start]:slide-in-from-right-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 relative isolate z-50 max-h-(--available-height) w-max max-w-[min(28rem,calc(100vw-2rem))] min-w-(--anchor-width) origin-(--transform-origin) overflow-x-hidden overflow-y-auto rounded-lg shadow-md ring-1 duration-100 data-[align-trigger=true]:animate-none",
             className,
           )}
           {...props}

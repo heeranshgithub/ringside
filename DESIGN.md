@@ -115,8 +115,9 @@ Client pages cannot export metadata, so each route segment holds a small `layout
 
 shadcn/ui over Base UI primitives, **restyled through tokens, never replaced**. Every shadcn token
 (`--primary`, `--muted-foreground`, `--border`, `--sidebar`, …) is redefined in `globals.css`, and the
-component files in `src/components/ui` stay stock apart from two documented edits: `select.tsx` and
-`dropdown-menu.tsx` have upstream's `cursor-default` stripped from their items, for the reason in rule 9.
+component files in `src/components/ui` stay stock apart from documented edits: `select.tsx` and
+`dropdown-menu.tsx` have upstream's `cursor-default` stripped from their items, for the reason in rule 9,
+and `select.tsx` lets its popup grow past the trigger so a long option is never clipped.
 Each carries a comment saying so, because `shadcn add` would silently put it back. Halo adds its own token layer on top: `--sheet`,
 `--rail`, `--hairline`, `--tint`, and the `live` / `done` / `fail` triplets, each exposed to Tailwind
 through `@theme inline`.
