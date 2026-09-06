@@ -8,7 +8,7 @@ from typing import Any, Literal
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_SENSITIVE_MARKERS = ("key", "secret", "token", "password", "url", "uri", "phone")
+_SENSITIVE_MARKERS = ("key", "secret", "token", "password", "url", "uri", "phone", "access_code")
 
 
 class Settings(BaseSettings):
