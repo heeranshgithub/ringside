@@ -1,7 +1,7 @@
 "use client";
 
 import { Search, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,13 @@ import {
   useSearchPeopleMutation,
 } from "@/features/candidates/api";
 import { getErrorMessage } from "@/lib/errors";
+import { selectItems } from "@/lib/select-items";
 import { maskPhone } from "@/lib/format";
 import type { Person } from "@/types/candidate";
 import type { SearchCriteria } from "@/types/job";
+
+const providerLabel = (p: { label: string; configured: boolean }) =>
+  p.configured ? p.label : `${p.label} (no key)`;
 
 export function PeopleSearchPanel({
   jobId,
@@ -90,6 +94,16 @@ export function PeopleSearchPanel({
     });
 
   const allSelected = results.length > 0 && selected.size === results.length;
+  // One source for both the option list and the trigger's label map. Memoised because the
+  // fallback array would otherwise be a new object each render, re-running the map below.
+  const providerRows = useMemo(
+    () => providers ?? [{ name: "mock", label: "Demo dataset", configured: true, note: "" }],
+    [providers],
+  );
+  const providerItems = useMemo(
+    () => selectItems(providerRows, (p) => p.name, providerLabel),
+    [providerRows],
+  );
   const providerInfo = providers?.find((p) => p.name === provider);
 
   return (
@@ -132,17 +146,18 @@ export function PeopleSearchPanel({
           the bottom of the note rather than to the bottom of the selects. */}
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Provider" htmlFor="ps-provider">
-          <Select value={provider} onValueChange={(v) => setProvider(v ?? "mock")}>
+          <Select
+            value={provider}
+            onValueChange={(v) => setProvider(v ?? "mock")}
+            items={providerItems}
+          >
             <SelectTrigger id="ps-provider" className="w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {(
-                providers ?? [{ name: "mock", label: "Demo dataset", configured: true, note: "" }]
-              ).map((p) => (
+              {providerRows.map((p) => (
                 <SelectItem key={p.name} value={p.name} disabled={!p.configured}>
-                  {p.label}
-                  {!p.configured && " (no key)"}
+                  {providerLabel(p)}
                 </SelectItem>
               ))}
             </SelectContent>

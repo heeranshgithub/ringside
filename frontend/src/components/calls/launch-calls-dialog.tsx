@@ -1,7 +1,7 @@
 "use client";
 
 import { PhoneOutgoing, ShieldCheck, ShieldOff } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { useGetAgentsQuery } from "@/features/agents/api";
 import { useGetConfigQuery, useLaunchCallsMutation } from "@/features/calls/api";
 import { useGetDialTargetQuery } from "@/features/dial/api";
 import { getErrorMessage } from "@/lib/errors";
+import { selectItems } from "@/lib/select-items";
 import type { Candidate } from "@/types/candidate";
 import type { LaunchCallsResult } from "@/types/call";
 
@@ -47,6 +48,8 @@ const WINDOWS = {
 } as const;
 
 type WindowKey = keyof typeof WINDOWS;
+
+const agentLabel = (a: { name: string; voicePersona: string }) => `${a.name} · ${a.voicePersona}`;
 
 export function LaunchCallsDialog({
   open,
@@ -71,6 +74,7 @@ export function LaunchCallsDialog({
   const [win, setWin] = useState<WindowKey>("now");
   const [retries, setRetries] = useState("1");
 
+  const agentItems = useMemo(() => selectItems(agents ?? [], (a) => a.id, agentLabel), [agents]);
   const effectiveAgent = agentId ?? defaultAgentId;
   const realDial = config && !config.safeDialMode;
   const clearedCount = candidates.filter((c) => c.allowRealDial && c.phone).length;
@@ -120,7 +124,7 @@ export function LaunchCallsDialog({
             className={
               realDial
                 ? "border-destructive/30 bg-destructive/10 text-destructive flex items-start gap-2 rounded-lg border p-3 text-xs"
-                : "flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-800 dark:text-emerald-200"
+                : "border-done-line bg-done-bg text-done flex items-start gap-2 rounded-lg border p-3 text-xs"
             }
           >
             {realDial ? (
@@ -159,14 +163,18 @@ export function LaunchCallsDialog({
           <DialTargetCard />
 
           <Field label="Voice agent" htmlFor="launch-agent">
-            <Select value={effectiveAgent ?? ""} onValueChange={(v) => setAgentId(v)}>
+            <Select
+              value={effectiveAgent ?? ""}
+              onValueChange={(v) => setAgentId(v)}
+              items={agentItems}
+            >
               <SelectTrigger id="launch-agent" className="w-full">
                 <SelectValue placeholder="Choose an agent" />
               </SelectTrigger>
               <SelectContent>
                 {(agents ?? []).map((a) => (
                   <SelectItem key={a.id} value={a.id}>
-                    {a.name} · {a.voicePersona}
+                    {agentLabel(a)}
                   </SelectItem>
                 ))}
               </SelectContent>

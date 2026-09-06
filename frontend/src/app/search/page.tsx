@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,14 +15,19 @@ import {
 } from "@/components/ui/select";
 import { PeopleSearchPanel } from "@/components/candidates/people-search-panel";
 import { Field } from "@/components/field";
+import { selectItems } from "@/lib/select-items";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/states";
 import { useGetJobsQuery } from "@/features/jobs/api";
+
+const jobLabel = (j: { title: string; company?: string | null }) =>
+  j.company ? `${j.title} · ${j.company}` : j.title;
 
 export default function SearchPage() {
   const { data: jobs, error, isLoading, refetch } = useGetJobsQuery();
   const [jobId, setJobId] = useState<string>("");
   const [imported, setImported] = useState(0);
+  const jobItems = useMemo(() => selectItems(jobs ?? [], (j) => j.id, jobLabel), [jobs]);
   const job = jobs?.find((j) => j.id === jobId) ?? null;
 
   return (
@@ -60,15 +65,14 @@ export default function SearchPage() {
           </CardHeader>
           <CardContent>
             <Field label="Job" htmlFor="search-job">
-              <Select value={jobId} onValueChange={(v) => setJobId(v ?? "")}>
+              <Select value={jobId} onValueChange={(v) => setJobId(v ?? "")} items={jobItems}>
                 <SelectTrigger id="search-job" className="w-full sm:w-96">
                   <SelectValue placeholder="Select a job" />
                 </SelectTrigger>
                 <SelectContent>
                   {jobs.map((j) => (
                     <SelectItem key={j.id} value={j.id}>
-                      {j.title}
-                      {j.company ? ` · ${j.company}` : ""}
+                      {jobLabel(j)}
                     </SelectItem>
                   ))}
                 </SelectContent>

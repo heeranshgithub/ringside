@@ -2,7 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # dev runs the quality gates but never deploys: the deploy job below is pinned to main,
+    # and the IAM role's trust policy will not mint credentials for any other ref anyway.
+    branches: [main, dev]
   pull_request:
     branches: [main]
 

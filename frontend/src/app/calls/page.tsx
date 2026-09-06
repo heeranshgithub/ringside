@@ -15,6 +15,7 @@ import {
 import { CallDetailSheet } from "@/components/calls/call-detail-sheet";
 import { CallsTable } from "@/components/calls/calls-table";
 import { PageHeader } from "@/components/page-header";
+import { selectItems } from "@/lib/select-items";
 import { EmptyState, ErrorState, TableSkeleton } from "@/components/states";
 import { useGetCallsQuery, useSyncAllCallsMutation } from "@/features/calls/api";
 import { useGetJobsQuery } from "@/features/jobs/api";
@@ -49,7 +50,13 @@ export default function CallsPage() {
     [],
   );
   const jobItems = useMemo(
-    () => ({ all: "All jobs", ...Object.fromEntries((jobs ?? []).map((j) => [j.id, j.title])) }),
+    () =>
+      selectItems(
+        jobs ?? [],
+        (j) => j.id,
+        (j) => j.title,
+        { all: "All jobs" },
+      ),
     [jobs],
   );
   const { data, error, isLoading, refetch } = useGetCallsQuery(

@@ -52,6 +52,7 @@ import {
 import { useDeleteJobMutation, useGetJobQuery, useUpdateJobMutation } from "@/features/jobs/api";
 import { useLiveInterval } from "@/features/live/live-provider";
 import { getErrorMessage } from "@/lib/errors";
+import { selectItems } from "@/lib/select-items";
 import { maskPhone } from "@/lib/format";
 import type { AgentDraft } from "@/types/agent";
 import type { Candidate, CandidateSource } from "@/types/candidate";
@@ -236,6 +237,15 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
   const { data: config } = useGetConfigQuery();
   const { data: agent, isLoading } = useGetAgentQuery(job.agentId ?? "", { skip: !job.agentId });
   const { data: agents } = useGetAgentsQuery();
+  const agentItems = useMemo(
+    () =>
+      selectItems(
+        agents ?? [],
+        (a) => a.id,
+        (a) => a.name,
+      ),
+    [agents],
+  );
   const [draftAgent, draftState] = useDraftAgentMutation();
   const [createAgent, createState] = useCreateAgentMutation();
   const [updateJob] = useUpdateJobMutation();
@@ -352,6 +362,7 @@ function AgentTab({ job, onDone }: { job: Job; onDone: () => void }) {
                 <div className="flex flex-col gap-1.5">
                   <p className="text-muted-foreground text-xs">or attach existing</p>
                   <Select
+                    items={agentItems}
                     onValueChange={async (v) => {
                       if (!v) return;
                       try {
