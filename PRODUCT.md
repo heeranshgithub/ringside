@@ -8,8 +8,8 @@ web
 ## Users
 
 In-house recruiters at a desk, on a laptop or external monitor, during office hours. They run several open
-jobs at once and check call results between meetings. Secondary audience (confirmed): people evaluating the
-product and the author's craft as a portfolio piece; they arrive at the dashboard cold.
+jobs at once and check call results between meetings. Secondary audience: someone opening the product for
+the first time with no walkthrough, so every screen has to explain itself.
 
 ## Product Purpose
 
@@ -50,7 +50,7 @@ people-search criteria in one step, and every call comes back as ranked, evidenc
 
 - Name: Ringside. Mark: a voice waveform bent into a ring, twelve radial ticks; see `src/components/logo.tsx`
   and the mark section of DESIGN.md.
-- Anti-goals confirmed by the owner: not a generic SaaS dashboard; not playful or gimmicky (no mascots, heavy
+- Anti-goals: not a generic SaaS dashboard; not playful or gimmicky (no mascots, heavy
   gradients, animation for its own sake); not corporate-cold enterprise grey; not dark-only "AI startup" neon.
 - Built on Hunar.AI voice agents; credited, not co-branded.
 
