@@ -3,36 +3,38 @@
 > *If there were no smartphones but LLMs exist, and you are an HR who has to track attendance of 1,000
 > people every day across 100 locations, what would you do?*
 
-Feature phones, landlines, SMS, IVR and LLMs still exist. The phone network reaches all 100 sites, and an
-LLM means a phone call no longer needs a human on the other end. Attendance becomes two phone calls a day
-and one reconciliation.
+Buy biometric punch machines. Fingerprint punch at every site is the boring, proven answer to identity
+and presence, and no smartphone is involved. The question is where an LLM earns its place in a problem
+that hardware mostly solves.
 
-## The design
+## Primary: punch machines
 
-1. **Missed-call check-in.** Each worker registers one number and each site gets a virtual number. A
-   missed call inside the shift window is the worker's timestamped claim of presence, answered with an
-   SMS receipt. Free, works on any handset, needs no literacy. It proves the claim, not the location.
-2. **Voice-AI roll-call.** Twenty minutes after shift start an agent calls each site supervisor on the
-   site landline, in the local language, and turns "everyone is here except Suresh, Priya came at 9:30"
-   into a per-worker record. The landline proves the supervisor is on site. This is the screening agent
-   in this repo, pointed at a roster instead of a job description.
-3. **Spot checks.** On a few random calls a day the agent asks the supervisor to put a named worker on
-   the line. A worker who is never available gets flagged. Where a site already has a biometric punch
-   machine its export is reconciled against the calls. No new machines are bought: they need power, a PC
-   and maintenance at every site.
-4. **Reconciliation.** By 09:30 an LLM merges missed calls, roll-call and punches into one table with a
-   source and a confidence flag per row. HR sees only exceptions: silent sites, a worker's claim that the
-   supervisor did not confirm, three-day absentees. Agents call the silent sites back so HR does not have to.
+One machine per site, synced over the site's landline or GSM modem. A punch is the source of truth for
+"who was here and when". Enrolment happens at joining, and nothing in the daily flow needs literacy or
+a personal phone.
 
-## Why not the alternatives
+## What the machine does not solve
 
-SMS codes typed on a keypad have a high error rate, so SMS is the receipt channel, not the reporting one.
-A human call centre for 100 calls a day is a team of clerks with sick days and inconsistent notes; agents
-make the same call at 08:20 sharp and hand back structured data. A site with no signal keeps a signed
-sheet and the supervisor reads it out on the next call, flagged low-confidence.
+Across 100 sites, every day, something breaks: a machine that did not sync, a power cut, a new joiner
+not yet enrolled, a site whose count looks wrong, a worker who forgot to punch out. Today that tail is
+100 phone calls made by a clerk and a spreadsheet of hand-typed excuses. That is the job for the LLM.
 
-## What makes it trustworthy
+## Exception loop: a voice agent
 
-Every row can name its source. A present mark backed by a missed call, a supervisor statement and a punch
-is not the same fact as one read off a paper sheet, and the table never shows the two as the same green
-tick. Same principle as the hiring product: evidence over verdict, degrade visibly rather than guess.
+Each morning the sync produces a gap list. An agent calls only the supervisors on that list, on the site
+landline, in the local language, and turns "the machine was off, everyone was here except Suresh" into a
+per-worker record. Landline means the supervisor is on site. The record lands in the same table as the
+punches, flagged as a supervisor statement, not a verified punch. This is the screening agent in this
+repo, pointed at a roster instead of a job description.
+
+## Fallback: missed call
+
+A site with no working machine falls back to a missed call from each worker's registered number to a
+site-specific virtual number, answered with an SMS receipt. Free, works on any handset. It is the
+worker's timestamped claim, confirmed by the supervisor call above.
+
+## What HR sees
+
+One page by 09:30: silent sites, gaps the agent could not close, three-day absentees. Every row names its
+source, and a punch and a supervisor's word are never shown as the same green tick. Same principle as
+the hiring product: evidence over verdict, degrade visibly rather than guess.
