@@ -105,4 +105,6 @@ export interface ProviderInfo {
   configured: boolean;
   label: string;
   note: string;
+  /** When set, the server clamps a search to this many records and the picker follows. */
+  maxResults: number | null;
 }

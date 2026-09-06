@@ -4,7 +4,7 @@ from fastapi import APIRouter, status
 
 from app.core.deps import ContainerDep
 from app.core.errors import FeatureDisabled
-from app.integrations.people.base import PersonResult, SearchCriteria
+from app.integrations.people.base import PeopleProvider, PersonResult, SearchCriteria
 from app.integrations.people.pdl import PdlProvider
 from app.modules.candidates import service as candidates
 from app.modules.candidates.schemas import CandidateDto
@@ -41,21 +41,35 @@ _LABELS = {
 }
 
 
+def _result_cap(provider: PeopleProvider | None) -> int | None:
+    """How many records one search may return, when each record is billed.
+
+    Live PDL charges a credit per record and the free plan holds 100 a month, so one search
+    at the picker's 50 spends half of them. One record is enough to show the source is real;
+    the sandbox and the demo dataset are there for volume.
+    """
+    if isinstance(provider, PdlProvider) and not provider.sandbox:
+        return 1
+    return None
+
+
 @router.get("/providers", response_model=list[ProviderInfoDto])
 async def providers(c: ContainerDep) -> list[ProviderInfoDto]:
     out = []
     for name, (label, note) in _LABELS.items():
         provider = c.providers.get(name)
-        # The sandbox returns synthetic people. Say so where the recruiter picks the source,
-        # or a demo run against it looks like a real search that found fake candidates.
+        cap = _result_cap(provider)
+        # These notes face the recruiter, not the operator: nothing here may tell them to set
+        # an environment variable they cannot reach.
         if isinstance(provider, PdlProvider) and provider.sandbox:
             label = f"{label} (sandbox)"
-            note = (
-                "Synthetic records with the live schema, at zero credits. "
-                "Set PDL_SANDBOX=false for real people."
-            )
+            note = "Synthetic records with the live schema. No credits are used."
+        elif cap == 1:
+            note = "Live data. Each record returned costs a credit, so a search brings back one."
         out.append(
-            ProviderInfoDto(name=name, configured=provider is not None, label=label, note=note)
+            ProviderInfoDto(
+                name=name, configured=provider is not None, label=label, note=note, max_results=cap
+            )
         )
     return out
 
@@ -65,7 +79,11 @@ async def search_people(body: SearchPeopleRequest, c: ContainerDep) -> SearchPeo
     provider = c.providers.get(body.provider)
     if provider is None:
         raise FeatureDisabled(f"Provider '{body.provider}' is not configured on this deployment.")
-    results = await provider.search(SearchCriteria(**body.criteria.model_dump()))
+    criteria = body.criteria.model_dump()
+    cap = _result_cap(provider)
+    if cap is not None:
+        criteria["limit"] = min(criteria["limit"], cap)
+    results = await provider.search(SearchCriteria(**criteria))
     return SearchPeopleResponse(
         provider=body.provider, results=[PersonDto.model_validate(r.model_dump()) for r in results]
     )

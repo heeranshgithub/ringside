@@ -6,13 +6,21 @@ where the free-tier surprises live.
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+
 import pytest
+from httpx import ASGITransport, AsyncClient
+from mongomock_motor import AsyncMongoMockClient
 
 from app.core.config import Settings
-from app.integrations.people.base import SearchCriteria
+from app.integrations.people.base import PersonResult, SearchCriteria
 from app.integrations.people.coresignal import CoresignalProvider
+from app.integrations.people.mock import MockProvider
 from app.integrations.people.pdl import PRODUCTION_URL, SANDBOX_URL, PdlProvider
-from app.main import _build_providers
+from app.main import _build_providers, create_app
+from tests.conftest import ACCESS_CODE, SESSION, TEST_KEY, FakeHunarClient
+from tests.stub_llm import StubLlm
 
 
 def settings(**overrides: object) -> Settings:
@@ -247,3 +255,78 @@ class TestCallingWindow:
 
         assert WIDEST_WINDOW.earliest_call_time == EARLIEST_CALL_TIME
         assert WIDEST_WINDOW.last_call_time == LATEST_CALL_TIME
+
+
+def _live_settings() -> Settings:
+    return Settings(
+        _env_file=None,
+        env="test",
+        mongodb_uri="mongodb://unused",
+        mongodb_db="test",
+        hunar_api_key=TEST_KEY,
+        app_access_code=ACCESS_CODE,
+        allow_client_dial_target=True,
+        poller_enabled=False,
+        openrouter_api_key="",
+    )
+
+
+@asynccontextmanager
+async def _client_with_pdl(sandbox: bool) -> AsyncIterator[AsyncClient]:
+    app = create_app(
+        _live_settings(),
+        db=AsyncMongoMockClient()["t"],
+        hunar=FakeHunarClient(),
+        llm=StubLlm(),
+        providers={"mock": MockProvider(), "pdl": PdlProvider("key", sandbox=sandbox)},
+    )
+    async with (
+        app.router.lifespan_context(app),
+        AsyncClient(
+            transport=ASGITransport(app=app),
+            base_url="http://t",
+            headers={"X-Access-Code": ACCESS_CODE, "X-Session-Id": SESSION},
+        ) as c,
+    ):
+        yield c
+
+
+async def _pdl_info(c: AsyncClient) -> dict:
+    return next(p for p in (await c.get("/api/search/providers")).json() if p["name"] == "pdl")
+
+
+class TestLivePdlIsCapped:
+    """Live PDL bills a credit per record, so the API caps a search at one and tells the UI."""
+
+    async def test_the_picker_is_told_the_cap_and_the_note_names_the_cost(self) -> None:
+        async with _client_with_pdl(sandbox=False) as c:
+            pdl = await _pdl_info(c)
+        assert pdl["maxResults"] == 1
+        assert pdl["label"] == "People Data Labs"
+        assert "credit" in pdl["note"]
+        assert "PDL_SANDBOX" not in pdl["note"]
+
+    async def test_the_sandbox_is_uncapped_and_never_names_an_env_var(self) -> None:
+        async with _client_with_pdl(sandbox=True) as c:
+            pdl = await _pdl_info(c)
+        assert pdl["maxResults"] is None
+        assert pdl["label"] == "People Data Labs (sandbox)"
+        assert "PDL_SANDBOX" not in pdl["note"]
+
+    async def test_a_live_search_asking_for_fifty_is_sent_as_one(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: dict[str, int] = {}
+
+        async def fake_search(self: PdlProvider, criteria: SearchCriteria) -> list[PersonResult]:
+            seen["limit"] = criteria.limit
+            return []
+
+        monkeypatch.setattr(PdlProvider, "search", fake_search)
+        async with _client_with_pdl(sandbox=False) as c:
+            r = await c.post(
+                "/api/search/people",
+                json={"provider": "pdl", "criteria": {"titles": ["x"], "limit": 50}},
+            )
+        assert r.status_code == 200
+        assert seen["limit"] == 1

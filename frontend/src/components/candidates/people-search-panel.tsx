@@ -36,6 +36,8 @@ import { maskPhone } from "@/lib/format";
 import type { Person } from "@/types/candidate";
 import type { SearchCriteria } from "@/types/job";
 
+const LIMITS = ["5", "10", "20", "50"];
+
 const providerLabel = (p: { label: string; configured: boolean }) =>
   p.configured ? p.label : `${p.label} (no key)`;
 
@@ -61,7 +63,7 @@ export function PeopleSearchPanel({
     try {
       const res = await search({
         provider,
-        criteria: { ...criteria, limit: Number(limit) },
+        criteria: { ...criteria, limit: Number(effectiveLimit) },
       }).unwrap();
       setResults(res.results);
       setSelected(new Set(res.results.map((p) => p.sourceRef)));
@@ -97,7 +99,10 @@ export function PeopleSearchPanel({
   // One source for both the option list and the trigger's label map. Memoised because the
   // fallback array would otherwise be a new object each render, re-running the map below.
   const providerRows = useMemo(
-    () => providers ?? [{ name: "mock", label: "Demo dataset", configured: true, note: "" }],
+    () =>
+      providers ?? [
+        { name: "mock", label: "Demo dataset", configured: true, note: "", maxResults: null },
+      ],
     [providers],
   );
   const providerItems = useMemo(
@@ -105,6 +110,13 @@ export function PeopleSearchPanel({
     [providerRows],
   );
   const providerInfo = providers?.find((p) => p.name === provider);
+  // A provider that bills per record tells us its cap. The picker shows that one size and
+  // locks, rather than offering sizes the server would clamp anyway, so what the recruiter
+  // sees is what gets spent. Derived, not stored, so switching providers cannot leave a
+  // stale "50" behind.
+  const cap = providerInfo?.maxResults ?? null;
+  const effectiveLimit = cap !== null ? String(cap) : limit;
+  const limitOptions = cap !== null ? [String(cap)] : LIMITS;
 
   return (
     <div className="space-y-4">
@@ -164,12 +176,16 @@ export function PeopleSearchPanel({
           </Select>
         </Field>
         <Field label="Max results" htmlFor="ps-limit">
-          <Select value={limit} onValueChange={(v) => setLimit(v ?? "10")}>
+          <Select
+            value={effectiveLimit}
+            onValueChange={(v) => setLimit(v ?? "10")}
+            disabled={cap !== null}
+          >
             <SelectTrigger id="ps-limit" className="w-24">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {["5", "10", "20", "50"].map((n) => (
+              {limitOptions.map((n) => (
                 <SelectItem key={n} value={n}>
                   {n}
                 </SelectItem>

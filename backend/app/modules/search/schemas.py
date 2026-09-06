@@ -51,3 +51,5 @@ class ProviderInfoDto(ApiModel):
     configured: bool
     label: str
     note: str
+    # When set, the server clamps a search to this many records and the picker follows.
+    max_results: int | None = None
