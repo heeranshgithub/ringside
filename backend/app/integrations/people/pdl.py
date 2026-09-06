@@ -54,19 +54,22 @@ class PdlProvider:
                 }
             )
         if criteria.locations:
-            must.append(
-                {
-                    "bool": {
-                        "should": [
-                            {"match": {"location_name": loc.lower()}} for loc in criteria.locations
-                        ]
-                        + [
-                            {"match": {"location_locality": loc.lower()}}
-                            for loc in criteria.locations
-                        ],
-                    }
-                }
-            )
+            # PDL's location fields are keyword-typed: they hold a bare "gurugram", and a
+            # `match` only fires on the whole value. Sending the model's "Gurugram, India"
+            # therefore matched nothing and, because this clause is a `must`, zeroed every
+            # search. Measured against the live API on 2026-09-06: the composite string
+            # returned 0, while `term location_locality = gurugram` returned 777,632.
+            # So keep the leading segment, which is the city, and try it as both a locality
+            # and a region — "Karnataka" and "Bengaluru" both arrive in this list.
+            places: list[dict[str, Any]] = []
+            for loc in criteria.locations:
+                city = next((p.strip().lower() for p in loc.split(",") if p.strip()), "")
+                if not city:
+                    continue
+                places.append({"term": {"location_locality": city}})
+                places.append({"term": {"location_region": city}})
+            if places:
+                must.append({"bool": {"should": places}})
         for s in criteria.skills:
             should.append({"term": {"skills": s.lower()}})
         if criteria.keywords:

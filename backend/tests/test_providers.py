@@ -114,6 +114,28 @@ class TestPdlQuery:
         )
         assert "minimum_should_match" not in repr(query)
 
+    def test_a_location_becomes_a_city_term_not_a_composite_match(self) -> None:
+        """PDL keyword fields hold a bare city, so "Gurugram, India" must not be sent whole.
+
+        This clause is a `must`: when it matched nothing, every search returned zero. The
+        live API scored the composite string at 0 hits and `location_locality = gurugram`
+        at 777,632 on 2026-09-06.
+        """
+        clause = PdlProvider.build_query(SearchCriteria(locations=["Gurugram, India"]))["bool"][
+            "must"
+        ][0]
+        assert clause["bool"]["should"] == [
+            {"term": {"location_locality": "gurugram"}},
+            {"term": {"location_region": "gurugram"}},
+        ]
+
+    def test_a_location_with_no_comma_still_produces_a_term(self) -> None:
+        clause = PdlProvider.build_query(SearchCriteria(locations=["Bengaluru"]))["bool"]["must"][0]
+        assert {"term": {"location_locality": "bengaluru"}} in clause["bool"]["should"]
+
+    def test_a_blank_location_is_dropped_rather_than_zeroing_the_search(self) -> None:
+        assert PdlProvider.build_query(SearchCriteria(locations=[" ", ","]))["bool"]["must"] == []
+
     def test_a_bare_should_still_requires_one_match(self) -> None:
         """Dropping the parameter is safe: a bool with only `should` defaults to one match."""
         inner = PdlProvider.build_query(SearchCriteria(titles=["a", "b"]))["bool"]["must"][0]
